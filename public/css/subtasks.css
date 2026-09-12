@@ -1,0 +1,126 @@
+.task-subtasks{
+    margin:0 20px 20px;
+
+    padding-top:18px;
+
+    border-top:1px solid var(--line);
+}
+
+.subtask-head{
+    display:flex;
+
+    align-items:center;
+    justify-content:space-between;
+
+    gap:15px;
+
+    margin-bottom:12px;
+}
+
+.subtask-head strong{
+    display:block;
+
+    font-size:12px;
+
+    margin-top:3px;
+}
+
+.subtask-head strong span{
+    color:var(--muted);
+
+    font-weight:400;
+
+    margin-left:4px;
+}
+
+.subtask-list{
+    display:flex;
+
+    flex-direction:column;
+
+    gap:7px;
+}
+
+.subtask-item{
+    display:flex;
+
+    align-items:center;
+    justify-content:space-between;
+
+    gap:15px;
+
+    padding:10px 12px;
+
+    background:#f7f8fa;
+
+    border:1px solid var(--line);
+
+    border-radius:8px;
+}
+
+.subtask-info{
+    display:flex;
+
+    flex-direction:column;
+
+    gap:3px;
+
+    min-width:0;
+}
+
+.subtask-info strong{
+    font-size:11px;
+    color:var(--text);
+}
+
+.subtask-info small{
+    font-size:9px;
+    color:var(--muted);
+}
+
+.subtask-priority{
+    font-size:9px;
+    white-space:nowrap;
+}
+
+.subtask-form{
+    margin-bottom:12px;
+
+    padding:12px;
+
+    background:#f7f8fa;
+
+    border:1px solid var(--line);
+
+    border-radius:9px;
+}
+
+.subtask-form-grid{
+    display:grid;
+
+    grid-template-columns:1fr 1fr 1fr;
+
+    gap:10px;
+
+    margin-top:10px;
+}
+
+.subtask-form-actions{
+    display:flex;
+
+    justify-content:flex-end;
+
+    gap:8px;
+
+    margin-top:12px;
+}
+
+.subtask-empty{
+    padding:15px 10px;
+
+    text-align:center;
+
+    color:var(--muted);
+
+    font-size:10px;
+}

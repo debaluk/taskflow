@@ -1,0 +1,62 @@
+.app-shell{
+    display:flex;
+    min-height:100vh;
+}
+
+.main{
+    margin-left:248px;
+    flex:1;
+    min-width:0;
+}
+
+.topbar{
+    height:62px;
+    background:#fff;
+    border-bottom:1px solid var(--line);
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    padding:0 28px;
+
+    position:sticky;
+    top:0;
+    z-index:10;
+}
+
+.breadcrumb{
+    font-size:12px;
+    color:var(--muted);
+}
+
+.breadcrumb span{
+    margin:0 7px;
+    color:#b5bac3;
+}
+
+.top-actions{
+    display:flex;
+    gap:8px;
+    align-items:center;
+}
+
+.icon-btn{
+    border:0;
+    background:transparent;
+    border-radius:8px;
+    padding:8px;
+    cursor:pointer;
+    color:#656c77;
+    font-size:16px;
+}
+
+.icon-btn:hover{
+    background:#f0f1f4;
+}
+
+.content{
+    width:100%;
+    padding:28px;
+    margin:0;
+}

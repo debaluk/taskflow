@@ -1,0 +1,140 @@
+.mobile-only{
+    display:none;
+}
+
+@media(max-width:1000px){
+
+    .workspace-overview-stats{
+        grid-template-columns:repeat(4,1fr);
+    }
+
+}
+
+@media(max-width:900px){
+
+    .sidebar{
+        transform:translateX(-100%);
+        transition:.2s;
+    }
+
+    .sidebar.open{
+        transform:translateX(0);
+    }
+
+    .main{
+        margin-left:0;
+    }
+
+    .mobile-only{
+        display:block;
+    }
+
+    .stats{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .board{
+        grid-template-columns:repeat(5,220px);
+    }
+
+    .modal-grid{
+        grid-template-columns:1fr;
+    }
+
+    .space-tree-add{
+        opacity:1;
+    }
+
+}
+
+@media(max-width:700px){
+
+    .subtask-form-grid{
+        grid-template-columns:1fr;
+    }
+
+    .subtask-head{
+        align-items:flex-start;
+        flex-direction:column;
+    }
+
+    .workspace-overview-stats{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .workspace-task-item{
+        grid-template-columns:1fr;
+        gap:5px;
+    }
+
+    .workspace-task-meta{
+        justify-content:flex-start;
+    }
+
+    .workspace-member-row{
+        grid-template-columns:1fr 1fr;
+        gap:8px;
+    }
+
+    .workspace-member-row.header{
+        display:none;
+    }
+
+}
+
+@media(max-width:600px){
+
+    .content{
+        padding:18px;
+    }
+
+    .topbar{
+        padding:0 15px;
+    }
+
+    .breadcrumb{
+        display:none;
+    }
+
+    .stats{
+        grid-template-columns:1fr 1fr;
+    }
+
+    .page-head{
+        align-items:flex-start;
+    }
+
+    .page-head p{
+        max-width:300px;
+    }
+
+    .task-row{
+        grid-template-columns:2fr 1fr 1fr;
+    }
+
+    .task-row>*:nth-child(4),
+    .task-row>*:nth-child(5){
+        display:none;
+    }
+
+    .segmented>*{
+        padding:7px 8px;
+    }
+
+    .space-action-popup{
+        width:260px;
+    }
+
+}
+
+@media(max-width:500px){
+
+    .workspace-detail-content{
+        padding:14px;
+    }
+
+    .workspace-overview-stats{
+        grid-template-columns:1fr 1fr;
+    }
+
+}

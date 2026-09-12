@@ -1,0 +1,143 @@
+.calendar{
+    overflow:hidden;
+}
+
+.calendar-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    padding:16px;
+}
+
+.weekdays,
+.days{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+}
+
+.weekdays{
+    background:#f7f8fa;
+
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+}
+
+.weekdays span{
+    padding:9px 10px;
+
+    font-size:9px;
+
+    color:var(--muted);
+
+    font-weight:700;
+}
+
+.day{
+    min-height:100px;
+
+    border-right:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+
+    padding:8px;
+
+    font-size:10px;
+}
+
+.day:nth-child(7n){
+    border-right:0;
+}
+
+.day.today>span{
+    background:var(--primary);
+    color:#fff;
+
+    border-radius:50%;
+
+    padding:3px 6px;
+}
+
+.calendar-task{
+    margin-top:8px;
+
+    border-radius:5px;
+
+    padding:5px;
+
+    font-size:9px;
+
+    cursor:pointer;
+}
+
+.calendar-task.status-open{
+    background:#edf0f4;
+    color:#626975;
+}
+
+.calendar-task.status-in-progress{
+    background:#eef0ff;
+    color:#4b43b5;
+}
+
+.calendar-task.status-review{
+    background:#fff4df;
+    color:#9b6500;
+}
+
+.calendar-task.status-done{
+    background:#e8f7ef;
+    color:#28754a;
+}
+
+.calendar-legend{
+    display:flex;
+
+    gap:18px;
+
+    align-items:center;
+
+    padding:14px 16px;
+
+    margin-top:12px;
+
+    background:#fff;
+
+    border:1px solid var(--line);
+    border-radius:10px;
+
+    font-size:10px;
+}
+
+.legend-item{
+    display:flex;
+    align-items:center;
+    gap:6px;
+
+    color:var(--muted);
+    font-weight:600;
+}
+
+.legend-dot{
+    width:10px;
+    height:10px;
+
+    border-radius:50%;
+
+    display:inline-block;
+}
+
+.legend-dot.status-open{
+    background:#626975;
+}
+
+.legend-dot.status-in-progress{
+    background:#4b43b5;
+}
+
+.legend-dot.status-review{
+    background:#9b6500;
+}
+
+.legend-dot.status-done{
+    background:#28754a;
+}

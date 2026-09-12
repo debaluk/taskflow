@@ -1,0 +1,94 @@
+.task-row{
+    display:grid;
+    grid-template-columns:2.3fr 1fr 1fr 1.1fr .7fr;
+    gap:12px;
+    align-items:center;
+    padding:13px 17px;
+    border-bottom:1px solid #f0f1f3;
+    font-size:11px;
+    cursor:pointer;
+}
+
+.task-row:last-child{
+    border-bottom:0;
+}
+
+.task-row.header{
+    font-size:9px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    cursor:default;
+}
+
+.task-name{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.check{
+    width:16px;
+    height:16px;
+    border:1px solid #cdd1d9;
+    border-radius:5px;
+    display:inline-block;
+}
+
+.status,
+.priority{
+    font-size:9px;
+    padding:4px 7px;
+    border-radius:999px;
+    font-weight:700;
+}
+
+.status{
+    background:#edf0f4;
+    color:#626975;
+}
+
+.status.in-progress{
+    background:#eef0ff;
+    color:#4b43b5;
+}
+
+.status.review{
+    background:#fff4df;
+    color:#9b6500;
+}
+
+.status.done{
+    background:#e8f7ef;
+    color:#28754a;
+}
+
+.priority.urgent{
+    color:#a22;
+    background:#fde9e9;
+}
+
+.priority.high{
+    color:#a46100;
+    background:#fff1dc;
+}
+
+.priority.normal{
+    color:#53606e;
+    background:#edf0f4;
+}
+
+.priority.low{
+    color:#65705d;
+    background:#eef4e9;
+}
+
+.assignee{
+    display:flex;
+    align-items:center;
+    cursor:pointer;
+}
+
+.assignee:hover{
+    opacity:.75;
+}

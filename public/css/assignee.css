@@ -1,0 +1,192 @@
+.assignee{
+    display:flex;
+    align-items:center;
+
+    cursor:pointer;
+}
+
+.assignee:hover{
+    opacity:.75;
+}
+
+.assignee-popup{
+    position:fixed;
+
+    top:50%;
+    left:50%;
+
+    transform:translate(-50%,-50%);
+
+    width:320px;
+
+    max-width:calc(100vw - 30px);
+
+    background:var(--panel);
+
+    border:1px solid var(--line);
+
+    border-radius:12px;
+
+    box-shadow:0 20px 60px rgba(0,0,0,.20);
+
+    z-index:10000;
+
+    overflow:hidden;
+}
+
+.assignee-popup-head{
+    display:flex;
+
+    align-items:center;
+    justify-content:space-between;
+
+    padding:13px 15px;
+
+    border-bottom:1px solid var(--line);
+}
+
+.assignee-popup-head strong{
+    font-size:12px;
+    font-weight:700;
+}
+
+.assignee-popup-head button{
+    width:28px;
+    height:28px;
+
+    padding:0;
+
+    border:0;
+
+    border-radius:7px;
+
+    background:transparent;
+
+    color:var(--muted);
+
+    font-size:20px;
+    line-height:1;
+
+    cursor:pointer;
+}
+
+.assignee-popup-head button:hover{
+    background:#f0f1f4;
+    color:var(--text);
+}
+
+.assignee-popup-search{
+    padding:10px;
+
+    border-bottom:1px solid var(--line);
+}
+
+.assignee-popup-search input{
+    width:100%;
+
+    box-sizing:border-box;
+
+    padding:9px 10px;
+
+    border:1px solid var(--line);
+
+    border-radius:7px;
+
+    background:#fff;
+
+    color:var(--text);
+
+    font:inherit;
+
+    font-size:11px;
+
+    outline:none;
+}
+
+.assignee-popup-search input:focus{
+    border-color:var(--primary);
+
+    box-shadow:0 0 0 2px var(--primary-soft);
+}
+
+.assignee-list{
+    max-height:240px;
+
+    overflow-y:auto;
+
+    padding:5px;
+}
+
+.assignee-member{
+    width:100%;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:2px;
+
+    padding:8px;
+
+    border:0;
+
+    border-radius:7px;
+
+    background:transparent;
+
+    color:var(--text);
+
+    font:inherit;
+
+    font-size:11px;
+
+    text-align:left;
+
+    cursor:pointer;
+}
+
+.assignee-member:hover{
+    background:#f3f4f6;
+}
+
+.assignee-member .avatar{
+    flex-shrink:0;
+}
+
+.assignee-empty{
+    padding:15px;
+
+    text-align:center;
+
+    color:var(--muted);
+
+    font-size:10px;
+}
+
+.assignee-unassign{
+    width:100%;
+
+    padding:10px;
+
+    border:0;
+
+    border-top:1px solid var(--line);
+
+    background:transparent;
+
+    color:#b42318;
+
+    font:inherit;
+
+    font-size:11px;
+
+    font-weight:600;
+
+    text-align:left;
+
+    cursor:pointer;
+}
+
+.assignee-unassign:hover{
+    background:#fff5f4;
+}
