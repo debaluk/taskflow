@@ -1,0 +1,96 @@
+/*
+ * TaskFlow UI layer
+ * Linear-style foundation with small ClickUp-inspired affordances.
+ * Keep this file limited to presentation overrides; behavior stays in existing components.
+ */
+
+:root {
+    --linear-hover: #f4f5f7;
+    --linear-active: #eef0ff;
+    --linear-focus: rgba(94, 106, 210, 0.18);
+}
+
+.nav-item,
+.tree-row,
+.icon-btn,
+.space-add-btn,
+.workspace-add,
+.assignee-member,
+.btn,
+.segmented > * {
+    transition:
+        background-color 140ms ease,
+        border-color 140ms ease,
+        color 140ms ease,
+        box-shadow 140ms ease,
+        opacity 140ms ease;
+}
+
+.nav-item:hover,
+.icon-btn:hover,
+.space-add-btn:hover,
+.workspace-add:hover,
+.assignee-member:hover {
+    background: var(--linear-hover);
+}
+
+.nav-item.active {
+    background: var(--linear-active);
+    color: var(--text);
+}
+
+.tree-row:hover {
+    background: var(--linear-hover);
+}
+
+.tree-space-row.active {
+    background: var(--linear-active);
+}
+
+.tree-list-link.active {
+    background: var(--linear-active);
+    color: var(--text);
+    box-shadow: inset 2px 0 0 var(--primary);
+}
+
+.btn.primary {
+    background: var(--primary);
+}
+
+.btn.ghost {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+.btn:focus-visible,
+.icon-btn:focus-visible,
+.nav-item:focus-visible,
+.tree-link:focus-visible,
+.space-add-btn:focus-visible,
+.workspace-add:focus-visible,
+.assignee-member:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--linear-focus);
+}
+
+.stat,
+.panel,
+.modal,
+.task-modal,
+.dependency-type-popup,
+.assignee-popup {
+    box-shadow: var(--shadow);
+}
+
+.topbar {
+    box-shadow: 0 1px 0 rgba(17, 19, 24, 0.02);
+}
+
+.panel,
+.stat,
+.modal,
+.task-modal,
+.dependency-type-popup,
+.assignee-popup {
+    border-color: var(--line);
+}
