@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Builder;
 
 class Space extends Model
 {
@@ -25,6 +26,29 @@ class Space extends Model
     protected $casts = [
         'is_active' => 'boolean',
     ];
+
+    public function scopeAccessibleTo(Builder $query, int $userId): Builder
+    {
+        return $query->where(function (Builder $query) use ($userId) {
+            $query->where('owner_id', $userId)
+                ->orWhereHas('members', function (Builder $members) use ($userId) {
+                    $members->where('users.id', $userId);
+                });
+        });
+    }
+
+    public function isAccessibleBy(int $userId): bool
+    {
+        return static::query()
+            ->whereKey($this->getKey())
+            ->accessibleTo($userId)
+            ->exists();
+    }
+
+    public function isOwnedBy(int $userId): bool
+    {
+        return (int) $this->owner_id === $userId;
+    }
 
     public function workspace(): BelongsTo
     {
