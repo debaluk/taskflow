@@ -14,6 +14,37 @@ class SpaceMemberManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_space_member_cannot_change_or_delete_space_settings(): void
+    {
+        [$owner, $space] = $this->createOwnedSpace();
+        $member = User::factory()->create();
+
+        $space->members()->attach($member->id, [
+            'invited_by' => $owner->id,
+        ]);
+
+        $this->actingAs($member)
+            ->put(route('spaces.update', $space), [
+                'name' => 'Nama Diubah Member',
+                'description' => null,
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($member)
+            ->patch(route('spaces.toggle', $space))
+            ->assertForbidden();
+
+        $this->actingAs($member)
+            ->delete(route('spaces.destroy', $space))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('spaces', [
+            'id' => $space->id,
+            'name' => $space->name,
+            'is_active' => true,
+        ]);
+    }
+
     public function test_space_owner_can_view_and_add_members(): void
     {
         [$owner, $space] = $this->createOwnedSpace();
