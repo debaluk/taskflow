@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class SettingsController extends Controller
@@ -21,9 +22,16 @@ class SettingsController extends Controller
 
     public function clickupConnect()
     {
+        $state = Str::random(64);
+
+        session([
+            'clickup_oauth_state' => $state,
+        ]);
+
         $query = http_build_query([
             'client_id' => config('services.clickup.client_id'),
             'redirect_uri' => config('services.clickup.redirect_uri'),
+            'state' => $state,
         ]);
 
         return redirect(
@@ -33,6 +41,22 @@ class SettingsController extends Controller
 
     public function clickupCallback(Request $request)
     {
+        $state = $request->input('state');
+        $expectedState = session('clickup_oauth_state');
+
+        if (
+            ! is_string($state) ||
+            ! is_string($expectedState) ||
+            $expectedState === '' ||
+            ! hash_equals($expectedState, $state)
+        ) {
+            return redirect()
+                ->route('settings')
+                ->with('error', 'Validasi keamanan koneksi ClickUp gagal. Silakan coba hubungkan kembali.');
+        }
+
+        $request->session()->forget('clickup_oauth_state');
+
         if ($request->has('error')) {
             return redirect()
                 ->route('settings')
@@ -47,7 +71,9 @@ class SettingsController extends Controller
                 ->with('error', 'Authorization code ClickUp tidak valid.');
         }
 
-        $response = Http::post(
+        $response = Http::connectTimeout(5)
+            ->timeout(10)
+            ->post(
             'https://api.clickup.com/api/v2/oauth/token',
             [
                 'client_id' => config('services.clickup.client_id'),
