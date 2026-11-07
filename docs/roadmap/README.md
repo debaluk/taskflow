@@ -165,9 +165,18 @@ Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Dur
     - Saat Space dibuat, Owner disimpan sebagai `owner_id` sekaligus dicatat sebagai anggota awal di `space_members` dalam satu transaksi.
     - Sidebar navigasi hanya menampilkan Space yang dapat diakses user. CI pertama menemukan query sidebar masih menampilkan seluruh Space; query diperbaiki dan diuji ulang.
     - Dashboard, query List/Board/Calendar/Gantt, selector List, dan halaman List dibatasi ke Space aktif yang dapat diakses user.
-    - Folder dan List dapat dilihat Owner/Member; perubahan struktur Folder/List dibatasi untuk Owner. Member tetap dapat bekerja pada Task yang tersedia di Space sesuai matriks hak akses Task yang akan diterapkan pada tahap berikutnya.
+    - Folder dan List dapat dilihat Owner/Member; perubahan struktur Folder/List dibatasi untuk Owner.
   - **Pengujian:** `SpaceMembershipFoundationTest`, `SpaceMemberManagementTest`, dan `SpaceVisibilityTest` ditambahkan. GitHub Actions run `42403575394` berstatus **success**: **14 test passed (46 assertions)**. Pengujian mencakup filter daftar/sidebar Space, akses detail, hak lihat Folder/List untuk Member, pembatasan perubahan struktur kepada Owner, dan pencatatan Owner sebagai anggota awal.
-  - **Belum dilakukan:** migration belum dijalankan pada VPS produksi; otorisasi detail Task berbasis Owner/creator/assignee, pembuatan Task oleh Member, Assignment, Status, Subtask, Dependency, dan Reorder masih harus diamankan pada tahap berikutnya. Note untuk assignee-only juga belum tersedia sebagai endpoint yang terverifikasi. Tidak ada perubahan konfigurasi VPS.
+  - **Implementasi otorisasi Task (8 November 2026):**
+    - `authorizeTask()` sekarang memastikan Task berada di Workspace ID 1, Space aktif, dan user adalah Owner/anggota Space.
+    - Hak pengelolaan detail Task, penghapusan, assignment, Subtask, Dependency, dan Reorder dibatasi untuk Owner Space atau pembuat Task (`created_by`).
+    - Assignee-only hanya dapat mengubah status melalui endpoint status khusus dan menambahkan note; tidak dapat mengubah detail, menghapus Task, mengubah PIC, membuat/mengubah Subtask atau Dependency, maupun mengubah urutan/kolom melalui Reorder.
+    - Member Space dapat membuat Task pada List di Space yang dapat diaksesnya; pencatat `created_by` tetap user pembuat.
+    - Assignment sekarang hanya menerima pengguna yang terdaftar sebagai anggota Space terkait, bukan sekadar anggota Workspace.
+    - Endpoint note menggunakan tabel `activities` dengan action `task_note`; note tampil di detail Task, hanya dapat ditambahkan oleh Owner/pembuat/assignee, dan tidak menyediakan edit/hapus note.
+    - Detail Task mengirim permission flags ke UI. Modal menampilkan kontrol sesuai hak: Owner/pembuat mengelola detail; assignee-only mengubah status dan mengirim note; member biasa hanya melihat detail serta note yang tersedia.
+  - **Pengujian otorisasi Task:** `TaskAuthorizationTest` mencakup pembuatan Task oleh Member, izin status dan note assignee-only, penolakan edit/hapus/assignment/Subtask/Dependency/Reorder untuk assignee-only, hak pembuat dan Owner, penolakan user luar Space, serta batas Assignment ke anggota Space. GitHub Actions run `42404467719` berstatus **success**: **20 test passed (79 assertions)**.
+  - **Belum dilakukan:** migration belum dijalankan pada VPS produksi. Audit dan pengamanan lanjutan masih diperlukan untuk endpoint atau fitur lain yang belum tercakup oleh matriks Task, termasuk review route duplikat dan audit akses data aktivitas global. Tidak ada perubahan konfigurasi VPS.
   
 - [ ] **F1-03 — Rapikan definisi route**
   - Verifikasi route detail Task yang terduplikasi.
