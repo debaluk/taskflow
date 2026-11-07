@@ -7,7 +7,7 @@
 <div class="page-header">
     <div>
         <h1>Activity</h1>
-        <p>Aktivitas terbaru dari seluruh workspace yang dapat kamu akses.</p>
+        <p>Aktivitas terbaru dari Task pada Space yang dibagikan kepadamu.</p>
     </div>
 </div>
 
@@ -16,7 +16,7 @@
     <div class="panel-head">
         <div>
             <h2>Activity Feed</h2>
-            <p>Semua aktivitas workspace</p>
+            <p>Aktivitas Task dari Space yang dapat diakses</p>
         </div>
     </div>
 
@@ -42,7 +42,7 @@
                             {{ $activity->workspace->name ?? 'Unknown Workspace' }}
                         </span>
 
-                        <span>•</span>
+                        <span>â€¢</span>
 
                         <span>
                             {{ $activity->created_at->diffForHumans() }}
