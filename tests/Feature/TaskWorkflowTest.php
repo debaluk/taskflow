@@ -210,6 +210,51 @@ class TaskWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_reorder_rejects_subtasks_and_preserves_parent_authorization(): void
+    {
+        [$owner, $space, $list, $parentCreator] = $this->createSpaceWithMember();
+        $subtaskCreator = User::factory()->create();
+
+        $space->members()->attach($subtaskCreator->id, [
+            'invited_by' => $owner->id,
+        ]);
+
+        $parent = $this->createTask($space, $list, $parentCreator, 'Task induk milik member lain');
+        $subtask = Task::create([
+            'uuid' => (string) Str::uuid(),
+            'workspace_id' => $space->workspace_id,
+            'space_id' => $space->id,
+            'list_id' => $list->id,
+            'parent_id' => $parent->id,
+            'title' => 'Subtask milik pembuat berbeda',
+            'task_type' => 'task',
+            'status' => 'open',
+            'priority' => 'normal',
+            'position' => 1,
+            'created_by' => $subtaskCreator->id,
+            'version' => 1,
+        ]);
+
+        $this->actingAs($subtaskCreator)
+            ->patchJson(route('tasks.reorder'), [
+                'space_id' => $space->id,
+                'list_id' => $list->id,
+                'columns' => [
+                    [
+                        'status' => 'done',
+                        'tasks' => [$subtask->id],
+                    ],
+                ],
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('tasks', [
+            'id' => $subtask->id,
+            'status' => 'open',
+            'position' => 1,
+        ]);
+    }
+
     public function test_subtask_creation_rejects_external_return_url(): void
     {
         [$owner, $space, $list, $creator] = $this->createSpaceWithMember();
