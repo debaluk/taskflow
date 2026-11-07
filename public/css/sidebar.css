@@ -38,12 +38,22 @@
 .sidebar-brand{
     display:flex;
     align-items:center;
-    min-height:28px;
+    gap:9px;
+    min-height:36px;
     padding:0 10px;
 
     color:var(--text);
-    font-size:14px;
+    font-size:15px;
     font-weight:800;
+    line-height:1;
+}
+
+.sidebar-brand .brand-mark{
+    display:block;
+    flex:0 0 28px;
+    width:28px;
+    height:28px;
+    object-fit:contain;
 }
 
 .sidebar-brand a{
