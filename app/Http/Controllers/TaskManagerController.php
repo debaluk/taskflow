@@ -1474,6 +1474,7 @@ class TaskManagerController extends Controller
 
         $tasksQuery = Task::query()
             ->whereIn('id', $taskIds)
+            ->whereNull('parent_id')
             ->where('workspace_id', $workspace->id)
             ->whereIn('space_id', $this->accessibleSpaceIds($workspace->id));
 
