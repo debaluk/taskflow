@@ -107,6 +107,45 @@ class SpaceVisibilityTest extends TestCase
         ]);
     }
 
+    public function test_inactive_space_blocks_folder_and_task_list_access(): void
+    {
+        [$owner, $space, $workspace] = $this->createSpace();
+
+        $this->actingAs($owner)
+            ->patch(route('spaces.toggle', $space))
+            ->assertRedirect();
+
+        $this->actingAs($owner)
+            ->get(route('folders.index', [$workspace, $space]))
+            ->assertForbidden();
+
+        $this->actingAs($owner)
+            ->post(route('folders.store', [$workspace, $space]), [
+                'name' => 'Folder pada Space Nonaktif',
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($owner)
+            ->get(route('task-lists.index', $space))
+            ->assertNotFound();
+
+        $this->actingAs($owner)
+            ->post(route('task-lists.store', $space), [
+                'name' => 'List pada Space Nonaktif',
+            ])
+            ->assertNotFound();
+
+        $this->assertDatabaseMissing('folders', [
+            'space_id' => $space->id,
+            'name' => 'Folder pada Space Nonaktif',
+        ]);
+
+        $this->assertDatabaseMissing('task_lists', [
+            'space_id' => $space->id,
+            'name' => 'List pada Space Nonaktif',
+        ]);
+    }
+
     private function createSpace(): array
     {
         $owner = User::factory()->create();
