@@ -1495,7 +1495,7 @@ class TaskManagerController extends Controller
             'Terdapat task yang bukan bagian dari context aktif.'
         );
 
-        \\Illuminate\\Support\\Facades\\DB::transaction(function () use ($data, $tasks) {
+        \Illuminate\Support\Facades\DB::transaction(function () use ($data, $tasks) {
             foreach ($data['columns'] as $column) {
                 foreach ($column['tasks'] as $index => $taskId) {
                     $task = $tasks->get($taskId);
