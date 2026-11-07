@@ -33,6 +33,23 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    public function ownedSpaces(): HasMany
+    {
+        return $this->hasMany(Space::class, 'owner_id');
+    }
+
+    public function spaceMemberships(): HasMany
+    {
+        return $this->hasMany(SpaceMember::class);
+    }
+
+    public function spaces(): BelongsToMany
+    {
+        return $this->belongsToMany(Space::class, 'space_members')
+            ->withPivot('invited_by')
+            ->withTimestamps();
+    }
+
 	public function workspaceMembers(): HasMany
 	{
 		return $this->hasMany(WorkspaceMember::class);
