@@ -70,6 +70,32 @@ class ClickUpOAuthValidationTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_callback_handles_provider_connection_failure_without_server_error(): void
+    {
+        $user = User::factory()->create();
+
+        config([
+            'services.clickup.client_id' => 'test-client',
+            'services.clickup.client_secret' => 'test-secret',
+        ]);
+
+        Http::fake(function () {
+            throw new \\Illuminate\\Http\\Client\\ConnectionException('Connection failed.');
+        });
+
+        $this->actingAs($user)
+            ->withSession(['clickup_oauth_state' => 'test-state'])
+            ->get(route('settings.clickup.callback', [
+                'state' => 'test-state',
+                'code' => 'valid-looking-code',
+            ]))
+            ->assertRedirect(route('settings'))
+            ->assertSessionHas('error', 'Tidak dapat terhubung ke ClickUp. Silakan coba lagi.')
+            ->assertSessionMissing('clickup_access_token');
+
+        $this->assertFalse(session()->has('clickup_connected'));
+    }
+
     public function test_callback_does_not_store_an_invalid_access_token_response(): void
     {
         $user = User::factory()->create();
