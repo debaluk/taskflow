@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="app-base-path" content="{{ rtrim(parse_url(config('app.url'), PHP_URL_PATH) ?: '', '/') }}">
-    <title>@yield('title', 'Task Management')</title>
+    <title>@yield('title', 'TaskFlow')</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('images/brand/favicon.svg') }}">
+    <link rel="mask-icon" href="{{ asset('images/brand/flow-t-mark.svg') }}" color="#4F46E5">
+    <meta name="theme-color" content="#4F46E5">
     <link rel="stylesheet" href="{{ asset('css/taskflow.css') }}">
 </head>
 
@@ -144,7 +147,15 @@
 <aside class="sidebar" id="sidebar">
 
     <div class="brand">
-        <span class="brand-mark">T</span>
+        <img
+            class="brand-mark"
+            src="{{ asset('images/brand/flow-t-mark.svg') }}"
+            alt=""
+            aria-hidden="true"
+            width="28"
+            height="28"
+            style="display:block;width:28px;height:28px;object-fit:contain;"
+        >
         <span>TaskFlow</span>
     </div>
 
