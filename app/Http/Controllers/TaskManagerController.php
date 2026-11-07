@@ -1228,6 +1228,12 @@ class TaskManagerController extends Controller
                 'nullable',
                 'date',
             ],
+
+            'return_url' => [
+                'nullable',
+                'string',
+                'max:2048',
+            ],
         ]);
 
         $position = (int) Task::query()
@@ -1267,11 +1273,12 @@ class TaskManagerController extends Controller
 
         $this->updateParentProgress($task);
 
-        $returnUrl = $request->input('return_url');
+        $returnUrl = $this->safeReturnUrl(
+            $data['return_url'] ?? null,
+            route('tasks.index')
+        );
 
-        return redirect(
-            $returnUrl ?: route('tasks.index')
-        )->with(
+        return redirect($returnUrl)->with(
             'success',
             'Subtask berhasil dibuat.'
         );
@@ -1488,41 +1495,43 @@ class TaskManagerController extends Controller
             'Terdapat task yang bukan bagian dari context aktif.'
         );
 
-        foreach ($data['columns'] as $column) {
-            foreach ($column['tasks'] as $index => $taskId) {
-                $task = $tasks->get($taskId);
+        \\Illuminate\\Support\\Facades\\DB::transaction(function () use ($data, $tasks) {
+            foreach ($data['columns'] as $column) {
+                foreach ($column['tasks'] as $index => $taskId) {
+                    $task = $tasks->get($taskId);
 
-                abort_unless(
-                    $task,
-                    403,
-                    'Task tidak dapat diakses.'
-                );
-
-                $this->authorizeTaskManagement($task);
-
-                $task->update([
-                    'status' => $column['status'],
-
-                    'position' => $index + 1,
-
-                    'progress' => $column['status'] === 'done'
-                        ? 100
-                        : (
-                            $column['status'] === 'open'
-                                ? 0
-                                : $task->progress
-                        ),
-
-                    'updated_by' => auth()->id(),
-                ]);
-
-                if ($task->parent_id) {
-                    $this->updateParentProgress(
-                        $task->parent
+                    abort_unless(
+                        $task,
+                        403,
+                        'Task tidak dapat diakses.'
                     );
+
+                    $this->authorizeTaskManagement($task);
+
+                    $task->update([
+                        'status' => $column['status'],
+
+                        'position' => $index + 1,
+
+                        'progress' => $column['status'] === 'done'
+                            ? 100
+                            : (
+                                $column['status'] === 'open'
+                                    ? 0
+                                    : $task->progress
+                            ),
+
+                        'updated_by' => auth()->id(),
+                    ]);
+
+                    if ($task->parent_id) {
+                        $this->updateParentProgress(
+                            $task->parent
+                        );
+                    }
                 }
             }
-        }
+        });
 
         return response()->json([
             'success' => true,
