@@ -68,7 +68,7 @@ class TaskWorkflowTest extends TestCase
                 'depends_on_task_id' => $dependsOn->id,
                 'dependency_type' => 'FS',
             ])
-            ->assertCreated()
+            ->assertOk()
             ->assertJsonPath('dependency.dependency_type', 'FS');
 
         $dependencyId = $response->json('dependency.id');
