@@ -48,6 +48,44 @@ class AuthFlowTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_login_endpoint_is_rate_limited_after_five_attempts(): void
+    {
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $this->post(route('login'), [
+                'email' => 'unknown@example.test',
+                'password' => 'wrong-password',
+            ])->assertRedirect(route('login'));
+        }
+
+        $this->post(route('login'), [
+            'email' => 'unknown@example.test',
+            'password' => 'wrong-password',
+        ])->assertTooManyRequests();
+
+        $this->assertGuest();
+    }
+
+    public function test_registration_endpoint_is_rate_limited_after_five_attempts(): void
+    {
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $this->post(route('register'), [
+                'name' => 'Rate Limit User',
+                'email' => 'rate-limit-' . $attempt . '@example.test',
+                'password' => 'secret123',
+                'password_confirmation' => 'secret123',
+            ])->assertRedirect(route('dashboard'));
+
+            auth()->logout();
+        }
+
+        $this->post(route('register'), [
+            'name' => 'Rate Limit User',
+            'email' => 'rate-limit-final@example.test',
+            'password' => 'secret123',
+            'password_confirmation' => 'secret123',
+        ])->assertTooManyRequests();
+    }
+
     public function test_invalid_login_is_rejected(): void
     {
         $user = User::factory()->create([
