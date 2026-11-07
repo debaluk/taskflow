@@ -99,6 +99,40 @@ class TaskWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_dependency_cannot_create_a_transitive_cycle(): void
+    {
+        [$owner, $space, $list, $creator] = $this->createSpaceWithMember();
+        $first = $this->createTask($space, $list, $creator, 'Task A');
+        $second = $this->createTask($space, $list, $creator, 'Task B');
+        $third = $this->createTask($space, $list, $creator, 'Task C');
+
+        $this->actingAs($creator)
+            ->postJson(route('tasks.dependency.store', $first), [
+                'depends_on_task_id' => $second->id,
+                'dependency_type' => 'FS',
+            ])
+            ->assertOk();
+
+        $this->actingAs($creator)
+            ->postJson(route('tasks.dependency.store', $second), [
+                'depends_on_task_id' => $third->id,
+                'dependency_type' => 'FS',
+            ])
+            ->assertOk();
+
+        $this->actingAs($creator)
+            ->postJson(route('tasks.dependency.store', $third), [
+                'depends_on_task_id' => $first->id,
+                'dependency_type' => 'FS',
+            ])
+            ->assertUnprocessable();
+
+        $this->assertDatabaseMissing('task_dependencies', [
+            'task_id' => $third->id,
+            'depends_on_task_id' => $first->id,
+        ]);
+    }
+
     public function test_dependency_must_stay_within_the_same_space(): void
     {
         [$owner, $space, $list, $creator] = $this->createSpaceWithMember();
