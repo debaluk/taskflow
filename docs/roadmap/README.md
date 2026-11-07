@@ -105,7 +105,14 @@ Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Dur
     - `WorkspaceMemberController` masih berisi operasi anggota Workspace, tetapi route untuk controller tersebut tidak terdaftar pada `routes/web.php`; halaman `workspaces.show` merujuk nama route `workspace.members` yang tidak ditemukan pada daftar route.
     - `FolderController::authorizeWorkspace()` memerlukan baris aktif di `workspace_members`. Sementara `AuthController::register()` tidak membuat baris tersebut. Ini membuat akses Folder bergantung pada relasi Workspace legacy, bukan konteks Workspace internal dan keanggotaan Space.
   - **Dampak:** Workspace `1` telah menjadi scope internal pada alur utama, tetapi belum menjadi mekanisme pembatas akses pengguna. Pembatasan yang benar harus memakai kepemilikan dan keanggotaan Space sesuai keputusan F1-02.
-  - **Batas perubahan:** belum ada perubahan kode atau database. Temuan ini dicatat sebagai hasil audit source; belum merupakan hasil pengujian runtime.
+  - **Implementasi koreksi minimum (8 November 2026):**
+    - Route manajemen Workspace lama (index/store/update/toggle/destroy/show), switch, dan clear dihapus dari `routes/web.php`. Workspace tidak lagi dapat dikelola atau dipilih sebagai konteks kerja melalui endpoint aplikasi.
+    - Import controller Workspace dan WorkspaceMember yang tidak lagi dipakai pada file route dihapus.
+    - Route Folder tetap dipertahankan; parameter Workspace pada route tersebut tetap menjadi bagian struktur internal, bukan fitur pemilihan Workspace.
+    - Tabel, model, dan relasi Workspace tidak dihapus; Workspace ID `1` tetap menjadi wadah teknis.
+  - **Pengujian ditambahkan:** `tests/Feature/WorkspaceContextTest.php` memastikan route manajemen/switch Workspace tidak terdaftar dan route Folder tetap tersedia. Hasil eksekusi PHPUnit belum dijalankan pada lingkungan ini.
+  - **Commit kode:** `c0e41fb` (disable route) dan `3f82a8e` (feature test).
+  - **Status:** Testing — perubahan kode sudah masuk `main`; menunggu eksekusi PHPUnit dan verifikasi runtime sebelum F1-01 dinyatakan Done.
 
 - [ ] **F1-02 — Audit otorisasi objek**
   - Terapkan otorisasi berbasis Space untuk Task, Subtask, Folder, List, anggota, dan Dependency.
