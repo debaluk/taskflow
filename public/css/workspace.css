@@ -39,17 +39,17 @@
 }
 
 .workspace-tree::-webkit-scrollbar-thumb{
-    background:#343a46;
+    background:#dfe3eb;
     border-radius:10px;
 }
 
 .workspace-tree::-webkit-scrollbar-thumb:hover{
-    background:#4a515e;
+    background:#c7cdd8;
 }
 
 .workspace-tree{
     scrollbar-width:thin;
-    scrollbar-color:#343a46 transparent;
+    scrollbar-color:#dfe3eb transparent;
 }
 
 .tree-space{
@@ -66,7 +66,7 @@
 }
 
 .tree-row:hover{
-    background:#242832;
+    background:#f6f7fb;
 }
 
 
@@ -79,7 +79,7 @@
     border:0;
     background:transparent;
 
-    color:#7f8999;
+    color:#8b93a1;
 
     display:flex;
     align-items:center;
@@ -96,12 +96,12 @@
 }
 
 .tree-toggle:hover{
-    color:#fff;
+    color:var(--primary);
 }
 
 .tree-toggle.expanded{
     transform:rotate(90deg);
-    color:#fff;
+    color:var(--primary);
 }
 
 .tree-children{
@@ -110,7 +110,7 @@
     margin-left:11px;
     padding-left:10px;
 
-    border-left:1px solid #303641;
+    border-left:1px solid var(--sidebar-border);
 }
 
 .tree-children.expanded{
@@ -127,7 +127,7 @@
     align-items:center;
     gap:8px;
 
-    color:#b8c0ce;
+    color:#626b79;
     text-decoration:none;
 
     font-size:13px;
@@ -141,7 +141,7 @@
 }
 
 .tree-link:hover{
-    color:#fff;
+    color:var(--primary);
 }
 
 .tree-name{
@@ -159,7 +159,7 @@
     align-items:center;
     justify-content:center;
 
-    color:#8e98aa;
+    color:#8b93a1;
 
     font-size:11px;
     font-weight:600;
@@ -206,20 +206,20 @@
 }
 
 .tree-workspace-link{
-    color:#e4e8ef;
+    color:var(--text);
     font-weight:600;
 }
 
 .tree-workspace-link .tree-icon{
-    color:#a78bfa;
+    color:var(--primary);
 }
 
 .tree-workspace-link.active{
-    color:#fff;
+    color:var(--primary);
 }
 
 .tree-space-row.active{
-    background:#242832;
+    background:var(--sidebar-active-bg);
 }
 
 .tree-space-link{
@@ -227,11 +227,11 @@
 }
 
 .tree-space-link .tree-icon{
-    color:#60a5fa;
+    color:#6366f1;
 }
 
 .tree-space-link.active{
-    color:#fff;
+    color:var(--primary);
 }
 
 .tree-list-row{
@@ -240,30 +240,26 @@
 }
 
 .tree-list-row .tree-icon{
-    color:#a78bfa;
+    color:#818cf8;
     font-size:15px;
 }
 
 .tree-list-link{
     cursor:pointer;
-    color:#aeb7c7;
+    color:#626b79;
 }
 
 .tree-list-link:hover{
-    background:#302749;
-    color:#fff;
+    background:var(--sidebar-active-bg);
+    color:var(--primary);
 }
 
 .tree-list-link.active{
-    background:linear-gradient(
-        90deg,
-        rgba(124,58,237,.35),
-        rgba(168,85,247,.12)
-    );
+    background:var(--sidebar-active-bg);
 
-    color:#fff;
+    color:var(--primary);
 
-    box-shadow:inset 2px 0 0 #a855f7;
+    box-shadow:inset 2px 0 0 var(--primary);
 }
 
 .tree-indent{
@@ -275,7 +271,7 @@
     border:0;
     background:transparent;
 
-    color:#8f98a8;
+    color:var(--sidebar-muted);
 
     font-size:17px;
 
@@ -288,8 +284,8 @@
 }
 
 .workspace-add:hover{
-    background:#292e39;
-    color:#fff;
+    background:var(--sidebar-hover);
+    color:var(--primary);
 }
 
 /* =========================================================
