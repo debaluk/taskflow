@@ -146,7 +146,7 @@
      ================================================================ --}}
 <aside class="sidebar" id="sidebar">
 
-    <div class="brand">
+    <div class="sidebar-brand">
         <img
             class="brand-mark"
             src="{{ asset('images/brand/flow-t-mark.svg') }}"
