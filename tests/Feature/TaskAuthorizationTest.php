@@ -57,6 +57,13 @@ class TaskAuthorizationTest extends TestCase
         $task->assignees()->attach($assignee->id);
 
         $this->actingAs($assignee)
+            ->getJson(route('tasks.show', $task))
+            ->assertOk()
+            ->assertJsonPath('permissions.manage', false)
+            ->assertJsonPath('permissions.update_status', true)
+            ->assertJsonPath('permissions.add_note', true);
+
+        $this->actingAs($assignee)
             ->patchJson(route('tasks.status', $task), [
                 'status' => 'in_progress',
             ])
@@ -144,6 +151,41 @@ class TaskAuthorizationTest extends TestCase
             ->assertRedirect();
 
         $this->assertSoftDeleted('tasks', ['id' => $task->id]);
+    }
+
+    public function test_space_member_without_assignment_can_view_but_cannot_change_status_or_add_note(): void
+    {
+        [$owner, $space, $list] = $this->createSpace();
+        $creator = User::factory()->create();
+        $member = User::factory()->create();
+
+        $space->members()->attach($creator->id, [
+            'invited_by' => $owner->id,
+        ]);
+        $space->members()->attach($member->id, [
+            'invited_by' => $owner->id,
+        ]);
+
+        $task = $this->createTask($space, $list, $creator);
+
+        $this->actingAs($member)
+            ->getJson(route('tasks.show', $task))
+            ->assertOk()
+            ->assertJsonPath('permissions.manage', false)
+            ->assertJsonPath('permissions.update_status', false)
+            ->assertJsonPath('permissions.add_note', false);
+
+        $this->actingAs($member)
+            ->patchJson(route('tasks.status', $task), [
+                'status' => 'done',
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($member)
+            ->postJson(route('tasks.notes.store', $task), [
+                'note' => 'Tidak berwenang.',
+            ])
+            ->assertForbidden();
     }
 
     public function test_unrelated_user_cannot_view_or_change_task(): void
