@@ -47,6 +47,7 @@ class TaskManagerController extends Controller
 
 		$baseTasksQuery = Task::query()
 			->where('workspace_id', $workspace->id)
+            ->whereIn('space_id', $this->accessibleSpaceIds($workspace->id))
 			->whereNull('parent_id');
 
 		/*
@@ -161,6 +162,7 @@ class TaskManagerController extends Controller
 
 		$spaces = Space::query()
 			->where('workspace_id', $workspace->id)
+            ->accessibleTo((int) auth()->id())
 			->where('is_active', true)
 			->orderBy('id')
 			->get();
@@ -252,6 +254,7 @@ class TaskManagerController extends Controller
         $space = Space::query()
             ->where('id', $spaceId)
             ->where('workspace_id', $workspace->id)
+            ->accessibleTo((int) auth()->id())
             ->where('is_active', true)
             ->first();
 
@@ -284,7 +287,8 @@ class TaskManagerController extends Controller
             ->whereHas('space', function ($query) use ($workspace) {
                 $query
                     ->where('workspace_id', $workspace->id)
-                    ->where('is_active', true);
+                    ->where('is_active', true)
+                    ->accessibleTo((int) auth()->id());
             });
 
         if ($space) {
@@ -303,6 +307,18 @@ class TaskManagerController extends Controller
     }
 
     /**
+     * ID Space yang boleh dilihat user login.
+     */
+    private function accessibleSpaceIds(int $workspaceId)
+    {
+        return Space::query()
+            ->where('workspace_id', $workspaceId)
+            ->where('is_active', true)
+            ->accessibleTo((int) auth()->id())
+            ->select('id');
+    }
+
+    /**
      * Scope query Task.
      */
     private function scopedTasksQuery(
@@ -313,6 +329,7 @@ class TaskManagerController extends Controller
     ) {
         return Task::query()
             ->where('workspace_id', $workspace->id)
+            ->whereIn('space_id', $this->accessibleSpaceIds($workspace->id))
             ->when($space, function ($query) use ($space) {
                 $query->where('space_id', $space->id);
             })
@@ -491,7 +508,8 @@ class TaskManagerController extends Controller
 	) {
 		abort_unless(
 			$space->is_active &&
-			(int) $space->workspace_id === 1,
+			(int) $space->workspace_id === 1 &&
+            $space->isAccessibleBy((int) auth()->id()),
 			404,
 			'Space tidak ditemukan.'
 		);
