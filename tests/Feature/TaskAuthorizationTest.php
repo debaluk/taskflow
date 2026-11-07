@@ -208,6 +208,43 @@ class TaskAuthorizationTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_invalid_return_url_type_is_rejected_before_task_mutation(): void
+    {
+        [$owner, $space, $list] = $this->createSpace();
+        $creator = User::factory()->create();
+
+        $space->members()->attach($creator->id, [
+            'invited_by' => $owner->id,
+        ]);
+
+        $task = $this->createTask($space, $list, $creator);
+
+        $this->actingAs($creator)
+            ->put(route('tasks.update', $task), [
+                'title' => 'Task Tidak Boleh Berubah',
+                'description' => null,
+                'status' => 'open',
+                'priority' => 'normal',
+                'return_url' => ['https://evil.example'],
+            ])
+            ->assertSessionHasErrors('return_url');
+
+        $this->assertDatabaseHas('tasks', [
+            'id' => $task->id,
+            'title' => 'Task test',
+        ]);
+
+        $this->actingAs($creator)
+            ->delete(route('tasks.destroy', $task), [
+                'return_url' => ['https://evil.example'],
+            ])
+            ->assertSessionHasErrors('return_url');
+
+        $this->assertNotSoftDeleted('tasks', [
+            'id' => $task->id,
+        ]);
+    }
+
     public function test_task_creator_can_delete_own_task(): void
     {
         [$owner, $space, $list] = $this->createSpace();
