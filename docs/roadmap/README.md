@@ -153,12 +153,12 @@ Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Dur
   - **Implementasi fondasi Owner dan membership (8 November 2026):**
     - Menambahkan `owner_id` ke `Space::$fillable`, sehingga Owner yang dikirim `SpaceController::store()` sekarang dapat tersimpan melalui mass assignment.
     - Menambahkan relasi `Space::owner()`, `Space::members()`, dan `Space::memberships()`.
-    - Menambahkan relasi `User::ownedSpaces()`, `User::spaces()`, dan `User::spaceMemberships()`. Pada eksekusi CI pertama, test menemukan relasi tersebut belum masuk ke file `User.php` karena pola pembaruan tidak cocok dengan indentasi file. Relasi kemudian ditambahkan secara eksplisit pada commit `6b168af`; menunggu hasil CI ulang.
+    - Menambahkan relasi `User::ownedSpaces()`, `User::spaces()`, dan `User::spaceMemberships()`. Pada eksekusi CI pertama, test menemukan relasi tersebut belum masuk ke file `User.php` karena pola pembaruan tidak cocok dengan indentasi file. Relasi kemudian ditambahkan secara eksplisit pada commit `6b168af`; Pengujian ulang pada GitHub Actions run `42402774106` berhasil: **6 test passed (21 assertions)**.
     - Menambahkan model `SpaceMember` dengan relasi Space, User, dan inviter.
     - Menambahkan migration `2026_11_08_000001_create_space_members_table` dengan foreign key ke Space/User, unique pair `space_id + user_id`, serta `invited_by` nullable. Tabel `members` global tidak diubah.
     - Menambahkan migration `2026_11_08_000002_add_owner_foreign_key_to_spaces_table`; penghapusan User pemilik Space dibatasi oleh foreign key `RESTRICT` agar Space tidak kehilangan Owner tanpa sengaja.
     - Menambahkan `SpaceMembershipFoundationTest` untuk mass assignment Owner, relasi Owner, keanggotaan, dan inviter.
-  - **Belum dilakukan:** migration belum dijalankan pada VPS produksi; belum ada pengelolaan anggota melalui UI/controller dan belum ada enforcement otorisasi berbasis membership. Tidak ada perubahan konfigurasi VPS. Menunggu hasil GitHub Actions setelah koreksi relasi User sebelum melanjutkan tahap berikutnya.
+  - **Belum dilakukan:** migration belum dijalankan pada VPS produksi; belum ada pengelolaan anggota melalui UI/controller dan belum ada enforcement otorisasi berbasis membership. Tidak ada perubahan konfigurasi VPS. Fondasi Owner dan membership lulus GitHub Actions run `42402774106` (**6 test passed, 21 assertions**). Tahap berikutnya adalah endpoint dan UI manajemen anggota Space; otorisasi objek Task tetap belum diimplementasikan.
   
 - [ ] **F1-03 — Rapikan definisi route**
   - Verifikasi route detail Task yang terduplikasi.
