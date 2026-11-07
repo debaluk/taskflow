@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 410 100" role="img" aria-labelledby="title">
+  <title id="title">TaskFlow</title>
+  <g transform="translate(0 0)">
+    <path fill="#4F46E5" d="M18 16h64L70 30H18c-6 0-9-7-5-11l5-3Z"/>
+    <path fill="#4F46E5" d="M42 30h16v46c0 8-6 14-14 14h-2V48c0-7 0-13 0-18Z"/>
+    <path fill="#4F46E5" d="M58 43h19L64 57H58V43Z"/>
+  </g>
+  <text x="112" y="68" fill="#20242C" font-family="Inter, ui-sans-serif, Arial, sans-serif" font-size="56" font-weight="700" letter-spacing="-2.5">TaskFlow</text>
+</svg>
