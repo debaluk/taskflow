@@ -132,6 +132,10 @@ class SpaceMemberManagementTest extends TestCase
             'is_active' => true,
         ]);
 
+        $space->members()->attach($owner->id, [
+            'invited_by' => $owner->id,
+        ]);
+
         return [$owner, $space];
     }
 
