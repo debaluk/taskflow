@@ -298,7 +298,10 @@ class TaskManagerController extends Controller
         Request $request,
         Workspace $workspace
     ): ?Space {
-        $spaceId = $request->integer('space_id');
+        $filters = $request->validate([
+            'space_id' => ['nullable', 'integer'],
+        ]);
+        $spaceId = (int) ($filters['space_id'] ?? 0);
 
         if (!$spaceId) {
             return null;
@@ -328,7 +331,10 @@ class TaskManagerController extends Controller
         Workspace $workspace,
         ?Space $space = null
     ): ?TaskList {
-        $listId = $request->integer('list_id');
+        $filters = $request->validate([
+            'list_id' => ['nullable', 'integer'],
+        ]);
+        $listId = (int) ($filters['list_id'] ?? 0);
 
         if (!$listId) {
             return null;
@@ -1556,15 +1562,13 @@ class TaskManagerController extends Controller
 
     public function calendar(Request $request)
     {
-        $month = $request->integer(
-            'month',
-            now()->month
-        );
+        $filters = $request->validate([
+            'month' => ['nullable', 'integer', 'between:1,12'],
+            'year' => ['nullable', 'integer', 'between:1,9999'],
+        ]);
 
-        $year = $request->integer(
-            'year',
-            now()->year
-        );
+        $month = (int) ($filters['month'] ?? now()->month);
+        $year = (int) ($filters['year'] ?? now()->year);
 
         $date = \Carbon\Carbon::create(
             $year,
