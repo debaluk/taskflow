@@ -225,6 +225,26 @@ Aturan tambahan:
   - Periksa validasi input pada endpoint utama.
   - Pastikan respons sukses/gagal konsisten dan kesalahan tidak membocorkan detail sensitif.
   - Kriteria penerimaan: input tidak valid ditolak dengan pesan yang layak dan data tidak berubah sebagian.
+  - **Status: In Progress (8 November 2026).** Audit dan koreksi awal sudah berjalan pada branch `main`; belum seluruh endpoint dan skenario request selesai diaudit.
+  - **Temuan audit awal:**
+    - Redirect Task create/update/delete telah memakai `safeReturnUrl()`, memvalidasi tipe/panjang input, dan menolak URL eksternal, skema tidak didukung, karakter ambigu, serta authority yang tidak sesuai host/port aplikasi.
+    - Endpoint pembuatan Subtask masih memakai `return_url` mentah untuk redirect. Ini membuka jalur open redirect yang belum tertutup oleh pengamanan Task utama.
+    - Endpoint Reorder memperbarui Task satu per satu. Jika request berisi beberapa Task dan otorisasi Task berikutnya gagal setelah Task sebelumnya terlanjur diperbarui, perubahan sebelumnya dapat tertinggal (partial update).
+    - Validasi tanggal Task utama sudah menolak `due_date` yang lebih awal dari `start_date`.
+    - Payload Reorder sudah menolak ID Task duplikat.
+    - Folder sudah membuat slug unik per Space untuk menghindari benturan slug saat nama Folder sama.
+    - Redirect OAuth ClickUp mengarah ke endpoint provider tetap; redirect internal lain yang diperiksa menggunakan named route/back redirect, bukan URL bebas dari request.
+  - **Koreksi yang sudah diterapkan:**
+    - `TaskManagerController::storeSubtask()` sekarang memvalidasi `return_url` sebagai string maksimal 2048 karakter dan menggunakan `safeReturnUrl()` dengan fallback ke `tasks.index`.
+    - Seluruh proses update pada `TaskManagerController::reorder()` sekarang dibungkus transaksi database agar kegagalan otorisasi/operasi pada satu Task membatalkan seluruh perubahan Reorder dalam request tersebut.
+  - **Pengujian tambahan:**
+    - `TaskWorkflowTest` menguji penolakan redirect eksternal pada pembuatan Subtask.
+    - `TaskWorkflowTest` menguji input `return_url` bertipe array ditolak sebelum Subtask dibuat.
+    - `TaskWorkflowTest` menguji Reorder rollback seluruh perubahan jika satu Task dalam payload tidak boleh dikelola pengguna.
+    - Pengujian sebelumnya tetap mencakup URL eksternal pada Task create/update/delete, tipe input return URL tidak valid, tanggal Task, ID Reorder duplikat, serta slug Folder duplikat.
+  - **Commit terkait F1-05:** `68b867e`, `c3d0a10`, `e3b1e1f`, `8e180c4`, `29b8d22`, `2084073`, `d8980e9`, dan `7da590e`.
+  - **Hasil CI:** baseline sebelum koreksi terakhir, run `42406417459`, sukses dengan **39 test passed (159 assertions)**. Setelah koreksi Subtask/Reorder, run `42407983588` sukses dengan **42 test passed (168 assertions)**; pemeriksaan sintaks JavaScript juga sukses. Dua run di antara commit awal dan koreksi referensi transaksi sempat gagal karena kesalahan sintaks pada penulisan namespace facade; diperbaiki pada commit `7da590e` dan diverifikasi ulang melalui run sukses tersebut.
+  - **Batas audit berikutnya:** lanjutkan pemeriksaan validasi/response pada endpoint Task, Subtask, Dependency, Space, Folder, List, Member, dan autentikasi; verifikasi batas panjang/format field terhadap kebutuhan serta tipe kolom database; cek konsistensi respons validasi untuk request browser dan JSON. Jangan menandai F1-05 Done sebelum seluruh temuan ditutup dan CI akhir sukses.
 
 - [ ] **F1-06 — Audit relasi dan integritas data**
   - Periksa relasi parent–subtask, assignee, dependency, dan struktur Workspace.
