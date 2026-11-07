@@ -89,6 +89,19 @@ Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Dur
   - Pastikan seluruh akses data kerja ditentukan melalui keanggotaan dan kepemilikan Space.
   - Kriteria penerimaan: Workspace tetap menggunakan ID `1`, sementara pengguna hanya dapat mengakses Space yang dimiliki atau dibagikan kepadanya.
 
+  - **Status audit: In Progress.** Audit source F1-01 telah dilakukan; pemenuhan akses per Space akan diverifikasi bersama implementasi otorisasi F1-02.
+  - **Temuan audit (8 November 2026):**
+    - `TaskManagerController::currentWorkspace()` mengunci Workspace ID `1` dan mengatur session ke ID yang sama. Perilaku ini sesuai keputusan arsitektur dan harus dipertahankan.
+    - `TaskManagerController::accessibleWorkspaceIds()` mengambil ID dari `workspace_members`, tetapi alur utama Task tidak menggunakan hasil tersebut sebagai scope.
+    - `AuthController::register()` membuat User dan login, tetapi tidak membuat relasi `WorkspaceMember`.
+    - Dashboard mengambil Task dan Space dari seluruh Workspace `1`; belum ada filter berdasarkan kepemilikan/keanggotaan Space.
+    - Query List, Board, Calendar, Gantt, `resolveSpace()`, `resolveTaskList()`, `scopedTasksQuery()`, `listPage()`, dan `authorizeTask()` memeriksa Workspace `1`/relasi objek, tetapi belum memeriksa apakah User memiliki akses ke Space.
+    - `FolderController::authorizeWorkspace()` masih memeriksa `WorkspaceMember`, sedangkan `TaskListController::authorizeSpace()` hanya memeriksa `workspace_id = 1`. Kedua pola ini tidak konsisten.
+    - `SpaceController` membatasi data ke Workspace `1`; controller mengirim `owner_id` saat membuat Space, tetapi atribut tersebut belum tercantum dalam `Space::$fillable`, sehingga penyimpanan Owner perlu diperbaiki pada F1-02.
+    - `WorkspaceController` masih menyediakan operasi create/update/toggle/delete dan switch Workspace. Namun alur Task utama tetap memaksa Workspace `1`; pengelolaan Workspace legacy ini perlu ditinjau agar tidak memberi kesan bahwa Workspace dapat dipilih sebagai konteks kerja.
+  - **Dampak:** Workspace `1` telah menjadi scope internal pada alur utama, tetapi belum menjadi mekanisme pembatas akses pengguna. Pembatasan yang benar harus memakai kepemilikan dan keanggotaan Space sesuai keputusan F1-02.
+  - **Batas perubahan:** belum ada perubahan kode atau database. Temuan ini dicatat sebagai hasil audit source; belum merupakan hasil pengujian runtime.
+
 - [ ] **F1-02 — Audit otorisasi objek**
   - Terapkan otorisasi berbasis Space untuk Task, Subtask, Folder, List, anggota, dan Dependency.
   - Bentuk relasi anggota pada tingkat Space. Satu Space dapat dimiliki satu Owner dan dibagikan kepada beberapa Member.
