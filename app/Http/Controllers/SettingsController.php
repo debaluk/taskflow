@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -71,16 +72,26 @@ class SettingsController extends Controller
                 ->with('error', 'Authorization code ClickUp tidak valid.');
         }
 
-        $response = Http::connectTimeout(5)
-            ->timeout(10)
-            ->post(
-            'https://api.clickup.com/api/v2/oauth/token',
-            [
-                'client_id' => config('services.clickup.client_id'),
-                'client_secret' => config('services.clickup.client_secret'),
-                'code' => $code,
-            ]
-        );
+        try {
+            $response = Http::connectTimeout(5)
+                ->timeout(10)
+                ->post(
+                    'https://api.clickup.com/api/v2/oauth/token',
+                    [
+                        'client_id' => config('services.clickup.client_id'),
+                        'client_secret' => config('services.clickup.client_secret'),
+                        'code' => $code,
+                    ]
+                );
+        } catch (ConnectionException $exception) {
+            Log::warning('ClickUp OAuth token request connection failed', [
+                'exception' => $exception::class,
+            ]);
+
+            return redirect()
+                ->route('settings')
+                ->with('error', 'Tidak dapat terhubung ke ClickUp. Silakan coba lagi.');
+        }
 
         if ($response->failed()) {
             Log::warning('ClickUp OAuth token request failed', [
