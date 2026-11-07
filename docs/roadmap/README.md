@@ -1,0 +1,257 @@
+# TaskFlow Product Roadmap & Development Backlog
+
+> Dokumen kerja pengembangan TaskFlow. Roadmap ini disusun berdasarkan audit source code pada branch `main`, bukan hasil pengujian menyeluruh pada server produksi.
+>
+> **Terakhir diperbarui:** 8 November 2026  
+> **Branch pengembangan:** `main`  
+> **Prinsip:** Pahami sebelum mengubah. Sederhanakan tanpa menghilangkan esensi. Bangun dengan tujuan, bukan sekadar memenuhi keinginan.
+
+## 1. Arah Produk
+
+TaskFlow dikembangkan sebagai aplikasi manajemen pekerjaan yang sederhana, terarah, dan mudah digunakan. Tujuannya bukan menyalin seluruh kompleksitas ClickUp, melainkan membantu tim mengorganisasi pekerjaan, berkolaborasi, dan menyelesaikannya dengan lebih baik.
+
+Tiga pilar produk:
+
+1. **Organize** — menyusun ruang kerja, daftar, tugas, prioritas, dan jadwal.
+2. **Collaborate** — berbagi tanggung jawab, memberi konteks, dan mengikuti perubahan pekerjaan.
+3. **Deliver** — memantau progres dan memastikan pekerjaan selesai.
+
+Prinsip pengembangan:
+- Utamakan stabilitas dan kejelasan alur sebelum menambah fitur.
+- Pertahankan perilaku yang sudah benar.
+- Audit sebelum perubahan; perubahan harus sesuai kebutuhan dan ruang lingkup.
+- Otorisasi harus ditegakkan di backend, bukan hanya disembunyikan di UI.
+- Setiap fitur harus memiliki kriteria penerimaan dan pengujian.
+- Hindari kompleksitas yang belum dibutuhkan pengguna.
+
+## 2. Inventaris Fitur Saat Audit
+
+Status berikut menggambarkan keberadaan implementasi pada source code. Status **Ada di source** tidak otomatis berarti fitur telah lulus pengujian end-to-end.
+
+| Area | Kondisi yang ditemukan | Status audit |
+|---|---|---|
+| Autentikasi | Login, registrasi, logout | Ada di source |
+| Struktur kerja | Workspace, Space, Folder, List | CRUD tersedia; perlu validasi skenario akses |
+| Task | CRUD, status, prioritas, tanggal jatuh tempo | Ada di source |
+| Penugasan | Member dan multi-assignee | Struktur/controller tersedia |
+| Subtask | Menggunakan tabel tasks dengan parent_id | CRUD tersedia |
+| Dependency | Penyimpanan dependency dan tampilan Gantt | Ada di source; perlu uji konsistensi |
+| Tampilan kerja | List, Board, Calendar, Gantt | Route/controller/view tersedia |
+| Dashboard | Ringkasan tugas, tugas saya, overdue, Space | Komponen tersedia; recent activity masih kosong |
+| Agenda | UI agenda tersedia | Controller masih mengirim data kosong |
+| Inbox | Route/controller tersedia | Belum berfungsi; view yang dirujuk berisi konten Settings |
+| Favorites | Route/controller/view tersedia | Controller mengirim koleksi kosong; dokumentasi menyebut fitur belum diaktifkan |
+| Activity | Model dan halaman pengelolaan tersedia | Pencatatan otomatis belum terverifikasi |
+| Settings | Halaman pengaturan dasar dan ClickUp | Sebagian konten masih placeholder |
+| ClickUp | OAuth connect/callback | OAuth tersedia; alur import end-to-end belum terverifikasi |
+
+### Catatan arsitektur dari audit
+
+- Resolusi Workspace aktif pada `TaskManagerController` ditemukan menggunakan ID Workspace tetap `1`. Ini perlu ditinjau karena berisiko tidak sesuai dengan prinsip Workspace dinamis dan batas akses pengguna.
+- Route detail Task ditemukan didefinisikan dua kali.
+- Controller Agenda dan Inbox masih mengirim data kosong.
+- View Inbox yang dirujuk controller tidak sesuai dengan fungsi Inbox.
+- Dashboard belum menampilkan aktivitas terbaru yang nyata.
+- OAuth ClickUp menyimpan token pada session dalam implementasi yang diperiksa; penyimpanan koneksi jangka panjang per pengguna belum terlihat.
+- Keberadaan Activity model/halaman belum membuktikan semua perubahan Task otomatis tercatat.
+- Pengujian otomatis yang memadai untuk alur bisnis utama belum terkonfirmasi dalam audit ini.
+
+## 3. Prioritas Roadmap
+
+| Fase | Fokus | Prioritas |
+|---|---|---|
+| 1. Stabilization & Foundation | Keamanan akses, konsistensi arsitektur, pengujian fondasi | P0 — dikerjakan lebih dahulu |
+| 2. Task Management Experience | Detail Task, komentar, pencarian, filter, dan penyempurnaan tampilan kerja | P1 |
+| 3. Collaboration & Notification | Activity, Inbox, notifikasi, mention, dan Agenda | P2 |
+| 4. Productivity & Overview | Dashboard, workload, metrik progres, dan Favorites | P3 |
+| 5. Integration & Data Portability | Import ClickUp yang lengkap, validasi, log, dan export | P4 |
+| 6. Product Readiness | Role/permission, audit trail, backup, performa, dokumentasi, dan uji tim | P5 |
+
+Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Durasi aktual ditentukan oleh hasil audit, kapasitas, dan hasil pengujian setiap fase.
+
+---
+
+# 4. Fase 1 — Stabilization & Foundation
+
+<badge-placeholder></badge-placeholder>
+
+**Tujuan:** memastikan fondasi TaskFlow aman, konsisten, dapat diuji, dan tidak menimbulkan regresi sebelum pengembangan fitur baru.
+
+**Batasan fase:** fokus pada audit, koreksi masalah fondasi yang terbukti, dan pengujian. Tidak menambahkan fitur kolaborasi atau produktivitas baru pada fase ini.
+
+## 4.1 Backlog Fase 1
+
+### P0 — Wajib diselesaikan
+
+- [ ] **F1-01 — Audit konteks Workspace aktif**
+  - Telusuri seluruh alur pemilihan Workspace dan relasi user–Workspace.
+  - Pastikan query Task, Space, Folder, List, dan anggota selalu dibatasi pada Workspace yang memang boleh diakses.
+  - Hilangkan ketergantungan pada ID Workspace tetap hanya setelah aturan Workspace yang benar dipastikan.
+  - Kriteria penerimaan: pengguna tidak dapat membaca atau mengubah data Workspace lain dengan manipulasi URL, parameter, atau request langsung.
+
+- [ ] **F1-02 — Audit otorisasi objek**
+  - Periksa otorisasi pada Task, Subtask, Space, Folder, List, Member, dan Dependency.
+  - Pastikan operasi baca, buat, ubah, hapus, assign, reorder, serta dependency menerapkan pemeriksaan akses di backend.
+  - Kriteria penerimaan: request tanpa hak akses ditolak secara konsisten dan tidak mengubah data.
+
+- [ ] **F1-03 — Rapikan definisi route**
+  - Verifikasi route detail Task yang terduplikasi.
+  - Hapus definisi duplikat setelah dipastikan tidak ada perbedaan middleware atau perilaku.
+  - Periksa konflik nama route dan urutan route dinamis.
+  - Kriteria penerimaan: setiap endpoint memiliki definisi yang jelas dan route:list tidak menunjukkan konflik yang tidak disengaja.
+
+- [ ] **F1-04 — Bangun pengujian alur inti**
+  - Siapkan feature test untuk autentikasi dan akses Workspace.
+  - Uji CRUD Task, perubahan status/prioritas, assignment, Subtask, dan Dependency.
+  - Uji pembatasan akses lintas pengguna/Workspace.
+  - Kriteria penerimaan: skenario inti berjalan otomatis dan hasil pengujian dapat diulang.
+
+### P1 — Penting setelah P0
+
+- [ ] **F1-05 — Audit validasi dan konsistensi request**
+  - Periksa validasi input pada endpoint utama.
+  - Pastikan respons sukses/gagal konsisten dan kesalahan tidak membocorkan detail sensitif.
+  - Kriteria penerimaan: input tidak valid ditolak dengan pesan yang layak dan data tidak berubah sebagian.
+
+- [ ] **F1-06 — Audit relasi dan integritas data**
+  - Periksa relasi parent–subtask, assignee, dependency, dan struktur Workspace.
+  - Tinjau perilaku penghapusan dan foreign key agar tidak meninggalkan data yatim.
+  - Kriteria penerimaan: operasi perubahan/penghapusan menjaga integritas relasi.
+
+- [ ] **F1-07 — Selaraskan dokumentasi dengan implementasi**
+  - Perbarui README bila deskripsi fitur tidak sesuai dengan kondisi aktual.
+  - Tegaskan fitur yang masih placeholder atau belum aktif.
+  - Kriteria penerimaan: dokumentasi tidak menyatakan fitur selesai jika implementasinya belum tersedia atau belum teruji.
+
+- [ ] **F1-08 — Verifikasi konfigurasi dan kesiapan rilis**
+  - Periksa konfigurasi environment, session, logging, cache, dan penanganan error tanpa mengubah konfigurasi server di luar kebutuhan.
+  - Pastikan langkah deploy dan rollback terdokumentasi.
+  - Kriteria penerimaan: prosedur rilis dapat diikuti dan verifikasi pascadeploy jelas.
+
+## 4.2 Urutan Pelaksanaan
+
+1. Audit Workspace dan otorisasi; dokumentasikan alur aktual sebelum mengubah kode.
+2. Buat daftar temuan dengan bukti file, method, route, dan dampaknya.
+3. Sepakati koreksi minimum untuk temuan yang terbukti.
+4. Implementasikan koreksi satu ruang lingkup pada satu waktu.
+5. Jalankan test suite dan pemeriksaan regresi.
+6. Tinjau diff, commit ke `main`, lalu lakukan verifikasi setelah deploy.
+
+## 4.3 Definition of Done Fase 1
+
+Fase 1 dinyatakan selesai jika:
+
+- [ ] Tidak ada akses lintas Workspace yang tidak sah pada skenario pengujian.
+- [ ] Otorisasi backend teruji untuk objek dan operasi utama.
+- [ ] Definisi route duplikat/konflik yang tidak disengaja telah dibereskan.
+- [ ] Alur Task, Subtask, Assignment, dan Dependency memiliki pengujian otomatis.
+- [ ] Integritas relasi dan perilaku penghapusan telah diverifikasi.
+- [ ] Dokumentasi sesuai dengan implementasi aktual.
+- [ ] Tidak ada regresi pada alur kerja inti.
+- [ ] Hasil test dan catatan perubahan tersedia sebelum fase berikutnya dimulai.
+
+---
+
+# 5. Fase 2 — Task Management Experience
+
+**Tujuan:** membuat pengelolaan satu pekerjaan terasa lengkap dan efisien.
+
+- [ ] Penyempurnaan halaman/detail Task sebagai pusat konteks pekerjaan.
+- [ ] Komentar dan percakapan yang melekat pada Task.
+- [ ] Pencarian Task lintas ruang kerja yang diizinkan.
+- [ ] Filter dan sorting berdasarkan status, prioritas, assignee, dan due date.
+- [ ] Penyempurnaan List, Board, Calendar, dan Gantt dengan perilaku yang konsisten.
+- [ ] Deskripsi Task yang nyaman dibaca dan diedit.
+- [ ] Penanganan empty state, loading, dan error state.
+
+**Kriteria fase:** pengguna dapat menemukan, memahami, memperbarui, dan memantau Task tanpa alur yang membingungkan.
+
+# 6. Fase 3 — Collaboration & Notification
+
+**Tujuan:** membuat perubahan dan tanggung jawab pekerjaan dapat diketahui oleh orang yang tepat.
+
+- [ ] Pencatatan Activity otomatis untuk pembuatan dan perubahan Task.
+- [ ] Inbox yang menampilkan event relevan, bukan sekadar daftar Task.
+- [ ] Notifikasi assignment dan perubahan penting.
+- [ ] Mention pengguna dan komentar/reply.
+- [ ] Status sudah dibaca/belum dibaca.
+- [ ] Agenda dengan data due date, upcoming, dan overdue yang nyata.
+- [ ] Preferensi notifikasi dasar.
+
+**Kriteria fase:** pengguna dapat mengetahui apa yang perlu diperhatikan dan mengapa suatu pekerjaan membutuhkan tindak lanjut.
+
+# 7. Fase 4 — Productivity & Overview
+
+**Tujuan:** memberi gambaran progres yang membantu pengambilan keputusan.
+
+- [ ] Dashboard memakai data aktual dan definisi metrik yang jelas.
+- [ ] Ringkasan pekerjaan per pengguna.
+- [ ] Progress per Space dan List.
+- [ ] Monitoring overdue dan pekerjaan berisiko.
+- [ ] Tren penyelesaian pekerjaan.
+- [ ] Favorites setelah aturan dan manfaatnya ditetapkan.
+- [ ] Ringkasan produktivitas sederhana.
+
+**Kriteria fase:** dashboard menjawab kondisi pekerjaan dan area yang membutuhkan perhatian, bukan hanya menampilkan angka.
+
+# 8. Fase 5 — Integration & Data Portability
+
+**Tujuan:** memudahkan perpindahan data dan mengurangi ketergantungan pada integrasi yang rapuh.
+
+- [ ] Tetapkan ruang lingkup dan format import ClickUp.
+- [ ] Simpan koneksi OAuth secara aman dan sesuai siklus hidup pengguna.
+- [ ] Mapping Workspace, Space, Folder, List, Task, Member, dan Assignee.
+- [ ] Mapping status, prioritas, due date, serta dependency jika didukung sumber.
+- [ ] Preview sebelum import dan validasi data.
+- [ ] Log hasil import, kegagalan, dan mekanisme retry yang aman.
+- [ ] Cegah duplikasi saat import diulang.
+- [ ] Evaluasi export data TaskFlow.
+
+**Kriteria fase:** proses import dapat dipahami, diaudit, diulang dengan aman, dan tidak menghasilkan duplikasi diam-diam.
+
+# 9. Fase 6 — Product Readiness
+
+**Tujuan:** menyiapkan TaskFlow untuk penggunaan tim yang lebih luas.
+
+- [ ] Role dan permission yang sesuai kebutuhan nyata.
+- [ ] Pengelolaan profil dan preferensi pengguna.
+- [ ] Audit trail untuk aktivitas penting.
+- [ ] Backup dan prosedur pemulihan.
+- [ ] Pemeriksaan performa query dan pagination.
+- [ ] Hardening keamanan dan pemeriksaan dependensi.
+- [ ] Dokumentasi pengguna dan administrator.
+- [ ] Uji penggunaan bersama tim dan perbaikan berdasarkan umpan balik.
+
+**Kriteria fase:** aplikasi dapat dioperasikan, dipelihara, dipulihkan, dan digunakan tim dengan kontrol akses yang jelas.
+
+## 10. Hal yang Sengaja Belum Diprioritaskan
+
+Fitur berikut tidak menjadi prioritas sampai kebutuhan nyata muncul:
+
+- AI task assistant.
+- Chat internal seperti aplikasi pesan.
+- Workflow automation yang kompleks.
+- Integrasi banyak aplikasi sekaligus.
+- Whiteboard atau document collaboration skala besar.
+- Fitur enterprise yang belum dibutuhkan.
+
+Keputusan ini menjaga TaskFlow tetap fokus dan menghindari penambahan kompleksitas sebelum fondasi dan kebutuhan utamanya matang.
+
+## 11. Aturan Pengelolaan Backlog
+
+Gunakan status berikut untuk setiap item:
+
+- **Planned** — sudah masuk roadmap, belum dikerjakan.
+- **In Progress** — sedang dikerjakan.
+- **Testing** — implementasi selesai, menunggu verifikasi.
+- **Done** — kriteria penerimaan terpenuhi dan sudah diverifikasi.
+- **Blocked** — tertahan oleh keputusan atau dependensi.
+
+Setiap item backlog sebaiknya memiliki:
+1. ID dan tujuan yang jelas.
+2. Temuan/kebutuhan yang menjadi alasan perubahan.
+3. Ruang lingkup dan file/area yang terdampak.
+4. Kriteria penerimaan yang dapat diuji.
+5. Catatan hasil test dan commit terkait.
+
+**Catatan penting:** jangan mengubah status menjadi Done hanya karena kode sudah ditulis. Status Done memerlukan verifikasi sesuai kriteria penerimaan.
