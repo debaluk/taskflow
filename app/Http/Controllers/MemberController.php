@@ -24,6 +24,7 @@ class MemberController extends Controller
         $validated = $request->validate([
             'user_id' => [
                 'required',
+                'integer',
                 'exists:users,id',
                 Rule::unique('members', 'user_id'),
             ],
@@ -50,7 +51,11 @@ class MemberController extends Controller
 
 	public function searchUsers(Request $request)
 	{
-		$search = trim($request->get('q', ''));
+		$data = $request->validate([
+			'q' => ['nullable', 'string', 'max:100'],
+		]);
+
+		$search = trim($data['q'] ?? '');
 
 		$users = User::query()
 			->whereDoesntHave('member')
