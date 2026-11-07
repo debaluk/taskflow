@@ -69,7 +69,7 @@ class FolderController extends Controller
             'space_id' => $space->id,
             'parent_id' => $parent?->id,
             'name' => $data['name'],
-            'slug' => Str::slug($data['name']),
+            'slug' => $this->uniqueFolderSlug($space, $data['name']),
             'description' => $data['description'] ?? null,
             'is_active' => true,
         ]);
@@ -121,7 +121,7 @@ class FolderController extends Controller
         $folder->update([
             'parent_id' => $parentId,
             'name' => $data['name'],
-            'slug' => Str::slug($data['name']),
+            'slug' => $this->uniqueFolderSlug($space, $data['name'], $folder->id),
             'description' => $data['description'] ?? null,
         ]);
 
@@ -173,6 +173,39 @@ class FolderController extends Controller
             'success',
             'Folder berhasil dihapus.'
         );
+    }
+
+    /**
+     * Buat slug unik dalam Space agar duplikasi nama tidak menjadi SQL error.
+     */
+    private function uniqueFolderSlug(
+        Space $space,
+        string $name,
+        ?int $ignoreFolderId = null
+    ): string {
+        $baseSlug = Str::slug($name);
+
+        if ($baseSlug === '') {
+            $baseSlug = 'folder';
+        }
+
+        $slug = $baseSlug;
+        $counter = 2;
+
+        while (
+            Folder::query()
+                ->where('space_id', $space->id)
+                ->where('slug', $slug)
+                ->when($ignoreFolderId, function ($query) use ($ignoreFolderId) {
+                    $query->where('id', '!=', $ignoreFolderId);
+                })
+                ->exists()
+        ) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        return $slug;
     }
 
     private function authorizeSpaceView(
