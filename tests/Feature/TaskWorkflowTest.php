@@ -176,6 +176,50 @@ class TaskWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_task_dates_cannot_have_due_date_before_start_date(): void
+    {
+        [$owner, $space, $list, $creator] = $this->createSpaceWithMember();
+
+        $this->actingAs($creator)
+            ->post(route('tasks.store'), [
+                'title' => 'Tanggal tidak valid',
+                'status' => 'open',
+                'priority' => 'normal',
+                'list_id' => $list->id,
+                'start_date' => '2026-12-10',
+                'due_date' => '2026-12-09',
+            ])
+            ->assertSessionHasErrors('due_date');
+
+        $this->assertDatabaseMissing('tasks', [
+            'title' => 'Tanggal tidak valid',
+        ]);
+    }
+
+    public function test_reorder_rejects_duplicate_task_ids(): void
+    {
+        [$owner, $space, $list, $creator] = $this->createSpaceWithMember();
+        $task = $this->createTask($space, $list, $creator);
+
+        $this->actingAs($creator)
+            ->patchJson(route('tasks.reorder'), [
+                'space_id' => $space->id,
+                'list_id' => $list->id,
+                'columns' => [
+                    [
+                        'status' => 'done',
+                        'tasks' => [$task->id, $task->id],
+                    ],
+                ],
+            ])
+            ->assertUnprocessable();
+
+        $this->assertDatabaseHas('tasks', [
+            'id' => $task->id,
+            'status' => 'open',
+        ]);
+    }
+
     public function test_member_without_space_access_cannot_create_task_in_that_space(): void
     {
         [$owner, $space, $list] = $this->createSpaceWithMember();
