@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Space;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class SpaceController extends Controller
 {
@@ -14,6 +15,7 @@ class SpaceController extends Controller
     {
         $spaces = Space::query()
             ->where('workspace_id', $this->workspaceId)
+            ->accessibleTo((int) auth()->id())
             ->withCount('folders')
             ->withCount('taskLists')
             ->orderBy('name')
@@ -25,7 +27,8 @@ class SpaceController extends Controller
     public function show(Space $space)
     {
         abort_unless(
-            (int) $space->workspace_id === $this->workspaceId,
+            (int) $space->workspace_id === $this->workspaceId &&
+            $space->isAccessibleBy((int) auth()->id()),
             404
         );
 
@@ -57,15 +60,21 @@ class SpaceController extends Controller
 
         } while ($exists);
 
-        Space::create([
-            'uuid' => (string) Str::uuid(),
-            'workspace_id' => $this->workspaceId,
-            'owner_id' => auth()->id(),
-            'name' => $data['name'],
-            'slug' => $slug,
-            'description' => $data['description'] ?? null,
-            'is_active' => true,
-        ]);
+        DB::transaction(function () use ($data, $slug) {
+            $space = Space::create([
+                'uuid' => (string) Str::uuid(),
+                'workspace_id' => $this->workspaceId,
+                'owner_id' => auth()->id(),
+                'name' => $data['name'],
+                'slug' => $slug,
+                'description' => $data['description'] ?? null,
+                'is_active' => true,
+            ]);
+
+            $space->members()->attach(auth()->id(), [
+                'invited_by' => auth()->id(),
+            ]);
+        });
 
         return back()->with(
             'success',
