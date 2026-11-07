@@ -18,11 +18,13 @@ class TaskManagerController extends Controller
     /**
      * Hanya izinkan URL kembali pada host aplikasi yang sedang diakses.
      */
-    private function safeReturnUrl(?string $candidate, string $fallback): string
+    private function safeReturnUrl(mixed $candidate, string $fallback): string
     {
-        if ($candidate === null || trim($candidate) === '') {
+        if (! is_string($candidate) || trim($candidate) === '') {
             return $fallback;
         }
+
+        $candidate = trim($candidate);
 
         if (
             str_starts_with($candidate, '//') ||
@@ -804,6 +806,12 @@ class TaskManagerController extends Controller
                 'integer',
                 'exists:folders,id',
             ],
+
+            'return_url' => [
+                'nullable',
+                'string',
+                'max:2048',
+            ],
         ]);
 
         $workspace = $this->currentWorkspace();
@@ -953,6 +961,12 @@ class TaskManagerController extends Controller
                 'nullable',
                 'date',
                 'after_or_equal:start_date',
+            ],
+
+            'return_url' => [
+                'nullable',
+                'string',
+                'max:2048',
             ],
         ]);
 
@@ -1159,6 +1173,11 @@ class TaskManagerController extends Controller
         Task $task
     ) {
         $this->authorizeTaskManagement($task);
+
+        $request->validate([
+            'return_url' => ['nullable', 'string', 'max:2048'],
+        ]);
+
 
         $task->delete();
 
