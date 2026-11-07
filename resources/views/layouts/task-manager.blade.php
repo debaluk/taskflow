@@ -27,6 +27,7 @@
 
     $sidebarSpaces = \App\Models\Space::query()
         ->where('workspace_id', 1)
+        ->accessibleTo((int) auth()->id())
         ->where('is_active', true)
         ->with([
             'taskLists' => function ($query) {
