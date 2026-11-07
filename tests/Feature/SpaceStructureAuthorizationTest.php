@@ -92,6 +92,116 @@ class SpaceStructureAuthorizationTest extends TestCase
         ]);
     }
 
+    public function test_folder_slug_is_not_reused_while_soft_deleted_record_exists(): void
+    {
+        [$owner, $space, $workspace] = $this->createSpace();
+
+        $this->actingAs($owner)
+            ->post(route('folders.store', [$workspace, $space]), [
+                'name' => 'Folder Arsip',
+            ])
+            ->assertRedirect();
+
+        $folder = Folder::query()
+            ->where('space_id', $space->id)
+            ->where('slug', 'folder-arsip')
+            ->firstOrFail();
+
+        $this->actingAs($owner)
+            ->delete(route('folders.destroy', [$workspace, $space, $folder]))
+            ->assertRedirect();
+
+        $this->actingAs($owner)
+            ->post(route('folders.store', [$workspace, $space]), [
+                'name' => 'Folder Arsip',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('folders', [
+            'id' => $folder->id,
+            'slug' => 'folder-arsip',
+        ]);
+
+        $this->assertDatabaseHas('folders', [
+            'space_id' => $space->id,
+            'slug' => 'folder-arsip-2',
+            'deleted_at' => null,
+        ]);
+    }
+
+    public function test_task_list_slug_is_not_reused_while_soft_deleted_record_exists(): void
+    {
+        [$owner, $space] = $this->createSpace();
+
+        $this->actingAs($owner)
+            ->post(route('task-lists.store', $space), [
+                'name' => 'List Arsip',
+            ])
+            ->assertRedirect();
+
+        $list = TaskList::query()
+            ->where('space_id', $space->id)
+            ->where('slug', 'list-arsip')
+            ->firstOrFail();
+
+        $this->actingAs($owner)
+            ->delete(route('task-lists.destroy', [$space, $list]))
+            ->assertRedirect();
+
+        $this->actingAs($owner)
+            ->post(route('task-lists.store', $space), [
+                'name' => 'List Arsip',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('task_lists', [
+            'id' => $list->id,
+            'slug' => 'list-arsip',
+        ]);
+
+        $this->assertDatabaseHas('task_lists', [
+            'space_id' => $space->id,
+            'slug' => 'list-arsip-2',
+            'deleted_at' => null,
+        ]);
+    }
+
+    public function test_folder_cannot_be_moved_under_its_own_descendant(): void
+    {
+        [$owner, $space, $workspace] = $this->createSpace();
+
+        $parent = Folder::create([
+            'uuid' => (string) Str::uuid(),
+            'workspace_id' => $workspace->id,
+            'space_id' => $space->id,
+            'name' => 'Parent',
+            'slug' => 'parent',
+            'is_active' => true,
+        ]);
+
+        $child = Folder::create([
+            'uuid' => (string) Str::uuid(),
+            'workspace_id' => $workspace->id,
+            'space_id' => $space->id,
+            'parent_id' => $parent->id,
+            'name' => 'Child',
+            'slug' => 'child',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($owner)
+            ->put(route('folders.update', [$workspace, $space, $parent]), [
+                'name' => 'Parent',
+                'parent_id' => $child->id,
+            ])
+            ->assertUnprocessable();
+
+        $this->assertDatabaseHas('folders', [
+            'id' => $parent->id,
+            'parent_id' => null,
+        ]);
+    }
+
     public function test_member_cannot_update_toggle_or_delete_folder_and_list(): void
     {
         [$owner, $space, $workspace] = $this->createSpace();
