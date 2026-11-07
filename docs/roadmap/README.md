@@ -99,6 +99,11 @@ Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Dur
     - `FolderController::authorizeWorkspace()` masih memeriksa `WorkspaceMember`, sedangkan `TaskListController::authorizeSpace()` hanya memeriksa `workspace_id = 1`. Kedua pola ini tidak konsisten.
     - `SpaceController` membatasi data ke Workspace `1`; controller mengirim `owner_id` saat membuat Space, tetapi atribut tersebut belum tercantum dalam `Space::$fillable`, sehingga penyimpanan Owner perlu diperbaiki pada F1-02.
     - `WorkspaceController` masih menyediakan operasi create/update/toggle/delete dan switch Workspace. Namun alur Task utama tetap memaksa Workspace `1`; pengelolaan Workspace legacy ini perlu ditinjau agar tidak memberi kesan bahwa Workspace dapat dipilih sebagai konteks kerja.
+    - `routes/web.php` menempatkan seluruh route Workspace di middleware `auth`, tetapi route create/update/toggle/delete/switch/clear/show tetap dapat dipanggil langsung. Tidak ditemukan tautan pemilihan Workspace pada sidebar utama.
+    - `resources/views/layouts/task-manager.blade.php` membangun pohon Space langsung dari `workspace_id = 1`; tidak membaca session Workspace sebagai pilihan konteks.
+    - `resources/views/workspaces/index.blade.php` masih menyediakan UI untuk membuat, mengubah, menonaktifkan, dan menghapus Workspace. Ini bertentangan dengan keputusan produk bahwa Workspace bukan fitur multi-tenant yang digunakan.
+    - `WorkspaceMemberController` masih berisi operasi anggota Workspace, tetapi route untuk controller tersebut tidak terdaftar pada `routes/web.php`; halaman `workspaces.show` merujuk nama route `workspace.members` yang tidak ditemukan pada daftar route.
+    - `FolderController::authorizeWorkspace()` memerlukan baris aktif di `workspace_members`. Sementara `AuthController::register()` tidak membuat baris tersebut. Ini membuat akses Folder bergantung pada relasi Workspace legacy, bukan konteks Workspace internal dan keanggotaan Space.
   - **Dampak:** Workspace `1` telah menjadi scope internal pada alur utama, tetapi belum menjadi mekanisme pembatas akses pengguna. Pembatasan yang benar harus memakai kepemilikan dan keanggotaan Space sesuai keputusan F1-02.
   - **Batas perubahan:** belum ada perubahan kode atau database. Temuan ini dicatat sebagai hasil audit source; belum merupakan hasil pengujian runtime.
 
