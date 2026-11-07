@@ -41,14 +41,14 @@ Status berikut menggambarkan keberadaan implementasi pada source code. Status **
 | Agenda | UI agenda tersedia | Controller masih mengirim data kosong |
 | Inbox | Route/controller tersedia | Belum berfungsi; view yang dirujuk berisi konten Settings |
 | Favorites | Route/controller/view tersedia | Controller mengirim koleksi kosong; dokumentasi menyebut fitur belum diaktifkan |
-| Activity | Model dan halaman pengelolaan tersedia | Pencatatan otomatis belum terverifikasi |
+| Activity | Task creation dan Task note dicatat; feed menampilkan aktivitas dari Task pada Space yang dapat diakses | Implementasi dan uji akses Space tersedia |
 | Settings | Halaman pengaturan dasar dan ClickUp | Sebagian konten masih placeholder |
 | ClickUp | OAuth connect/callback | OAuth tersedia; alur import end-to-end belum terverifikasi |
 
 ### Catatan arsitektur dari audit
 
 - Workspace ID `1` memang ditetapkan sebagai wadah data internal TaskFlow, bukan konteks kerja atau batas otorisasi pengguna. Akses pengguna harus ditentukan pada tingkat Space.
-- Route detail Task ditemukan didefinisikan dua kali.
+- Route detail Task sempat ditemukan didefinisikan dua kali; definisi duplikat sudah dihapus dan masuk pengujian route.
 - Controller Agenda dan Inbox masih mengirim data kosong.
 - View Inbox yang dirujuk controller tidak sesuai dengan fungsi Inbox.
 - Dashboard belum menampilkan aktivitas terbaru yang nyata.
@@ -174,9 +174,10 @@ Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Dur
     - Member Space dapat membuat Task pada List di Space yang dapat diaksesnya; pencatat `created_by` tetap user pembuat.
     - Assignment sekarang hanya menerima pengguna yang terdaftar sebagai anggota Space terkait, bukan sekadar anggota Workspace.
     - Endpoint note menggunakan tabel `activities` dengan action `task_note`; note tampil di detail Task, hanya dapat ditambahkan oleh Owner/pembuat/assignee, dan tidak menyediakan edit/hapus note.
+    - `ActivityController` sebelumnya menampilkan aktivitas seluruh Workspace ID 1 tanpa filter Space. Query feed sekarang dibatasi ke Task pada Space yang dapat diakses user; pengujian lintas-Space ditambahkan pada `ActivityVisibilityTest`.
     - Detail Task mengirim permission flags ke UI. Modal menampilkan kontrol sesuai hak: Owner/pembuat mengelola detail; assignee-only mengubah status dan mengirim note; member biasa hanya melihat detail serta note yang tersedia.
-  - **Pengujian otorisasi Task:** `TaskAuthorizationTest` mencakup pembuatan Task oleh Member, izin status dan note assignee-only, penolakan edit/hapus/assignment/Subtask/Dependency/Reorder untuk assignee-only, hak pembuat dan Owner, penolakan user luar Space, serta batas Assignment ke anggota Space. GitHub Actions run `42404467719` berstatus **success**: **20 test passed (79 assertions)**.
-  - **Belum dilakukan:** migration belum dijalankan pada VPS produksi. Audit dan pengamanan lanjutan masih diperlukan untuk endpoint atau fitur lain yang belum tercakup oleh matriks Task, termasuk review route duplikat dan audit akses data aktivitas global. Tidak ada perubahan konfigurasi VPS.
+  - **Pengujian otorisasi dan Activity:** `TaskAuthorizationTest` mencakup pembuatan Task oleh Member, izin status dan note assignee-only, penolakan edit/hapus/assignment/Subtask/Dependency/Reorder untuk assignee-only, hak pembuat dan Owner, penolakan user luar Space, serta batas Assignment ke anggota Space. `ActivityVisibilityTest` memastikan feed tidak membocorkan aktivitas Task dari Space lain. GitHub Actions run `42404683852` berstatus **success**: **21 test passed (82 assertions)**.
+  - **Belum dilakukan:** migration belum dijalankan pada VPS produksi. Audit endpoint lain yang belum tercakup matriks Task masih diperlukan sebelum F1-02 dinyatakan selesai. Tidak ada perubahan konfigurasi VPS.
   
 - [ ] **F1-03 — Rapikan definisi route**
   - Verifikasi route detail Task yang terduplikasi.
