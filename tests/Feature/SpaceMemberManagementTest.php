@@ -67,6 +67,20 @@ class SpaceMemberManagementTest extends TestCase
         ]);
     }
 
+    public function test_space_owner_cannot_remove_own_initial_membership(): void
+    {
+        [$owner, $space] = $this->createOwnedSpace();
+
+        $this->actingAs($owner)
+            ->delete(route('spaces.members.destroy', [$space, $owner]))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('space_members', [
+            'space_id' => $space->id,
+            'user_id' => $owner->id,
+        ]);
+    }
+
     public function test_space_owner_can_remove_member(): void
     {
         [$owner, $space] = $this->createOwnedSpace();
