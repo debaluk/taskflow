@@ -73,7 +73,7 @@ class SpaceMemberController extends Controller
         DB::transaction(function () use ($space, $user) {
             DB::table('task_assignees')
                 ->where('user_id', $user->id)
-                ->whereIn('task_id', Task::query()
+                ->whereIn('task_id', Task::withTrashed()
                     ->where('space_id', $space->id)
                     ->select('id'))
                 ->delete();
