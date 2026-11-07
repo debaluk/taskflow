@@ -51,16 +51,20 @@ class AuthFlowTest extends TestCase
     public function test_login_endpoint_is_rate_limited_after_five_attempts(): void
     {
         for ($attempt = 0; $attempt < 5; $attempt++) {
-            $this->post(route('login'), [
-                'email' => 'unknown@example.test',
-                'password' => 'wrong-password',
-            ])->assertRedirect(route('login'));
+            $this->from(route('login'))
+                ->post(route('login'), [
+                    'email' => 'unknown@example.test',
+                    'password' => 'wrong-password',
+                ])
+                ->assertRedirect(route('login'));
         }
 
-        $this->post(route('login'), [
-            'email' => 'unknown@example.test',
-            'password' => 'wrong-password',
-        ])->assertTooManyRequests();
+        $this->from(route('login'))
+            ->post(route('login'), [
+                'email' => 'unknown@example.test',
+                'password' => 'wrong-password',
+            ])
+            ->assertTooManyRequests();
 
         $this->assertGuest();
     }
