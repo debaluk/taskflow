@@ -217,8 +217,8 @@ Aturan tambahan:
 - Keanggotaan Space menentukan apakah pengguna boleh masuk dan melihat Space; status pembuat/assignee menentukan tindakan yang boleh dilakukan pada Task.
 - Note berarti menambahkan catatan; hak mengedit atau menghapus note milik pengguna lain tidak diberikan oleh keputusan ini.
 - Struktur Workspace tetap satu wadah internal dengan `workspace_id = 1`. Tidak ada perubahan ke model multi-Workspace.
-- Detail hak Subtask, Dependency, dan operasi reorder harus mengikuti otorisasi induknya dan tidak boleh menjadi jalur untuk melewati batas hak Task.
-- Implementasi fitur note perlu diaudit terlebih dahulu. Jika belum tersedia, catat sebagai dependensi fitur; jangan menganggap endpoint note sudah ada.
+- Otorisasi Subtask, Dependency, dan Reorder mengikuti hak pengelolaan Task induk; assignee-only tidak dapat memakai endpoint tersebut untuk mengubah detail atau urutan Task.
+- Endpoint note menggunakan tabel `activities` dengan action `task_note`; Owner/pembuat/assignee dapat menambahkan note pada Task yang dapat diaksesnya. Note ditampilkan pada detail Task dan tidak memiliki aksi edit/hapus.
 ### P1 — Penting setelah P0
 
 - [ ] **F1-05 — Audit validasi dan konsistensi request**
