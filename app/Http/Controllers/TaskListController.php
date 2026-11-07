@@ -98,7 +98,7 @@ class TaskListController extends Controller
         $counter = 2;
 
         while (
-            TaskList::query()
+            TaskList::withTrashed()
                 ->where('space_id', $space->id)
                 ->where('slug', $slug)
                 ->exists()
@@ -172,7 +172,7 @@ class TaskListController extends Controller
 		$counter = 2;
 
 		while (
-			TaskList::query()
+			TaskList::withTrashed()
 				->where('space_id', $space->id)
 				->where('slug', $slug)
 				->where('id', '!=', $taskList->id)
