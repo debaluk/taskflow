@@ -86,7 +86,7 @@ class FolderController extends Controller
         Space $space,
         Folder $folder
     ) {
-        $this->authorizeWorkspace($workspace);
+        $this->authorizeSpaceManagement($workspace, $space);
 
         $this->authorizeFolder(
             $workspace,
@@ -136,7 +136,7 @@ class FolderController extends Controller
         Space $space,
         Folder $folder
     ) {
-        $this->authorizeWorkspace($workspace);
+        $this->authorizeSpaceManagement($workspace, $space);
 
         $this->authorizeFolder(
             $workspace,
@@ -159,7 +159,7 @@ class FolderController extends Controller
         Space $space,
         Folder $folder
     ) {
-        $this->authorizeWorkspace($workspace);
+        $this->authorizeSpaceManagement($workspace, $space);
 
         $this->authorizeFolder(
             $workspace,
