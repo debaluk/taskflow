@@ -363,6 +363,7 @@ Fase 1 dinyatakan selesai jika:
 **Tujuan:** memudahkan perpindahan data dan mengurangi ketergantungan pada integrasi yang rapuh.
 
 - [ ] Tetapkan ruang lingkup dan format import ClickUp.
+- [ ] **Siapkan ulang command `task:import-ipas` agar sesuai dengan otorisasi Space:** command tetap dipertahankan untuk digunakan pada tahap pengembangan import berikutnya, tetapi belum dianggap siap. Setiap Space hasil import wajib memiliki `owner_id` yang valid dan Owner tersebut harus otomatis tercatat sebagai anggota awal pada `space_members`. Sebelum implementasi, audit ulang relasi dan alur import; validasi seluruh CSV sebelum reset data, jalankan reset/import secara aman dalam transaksi, dan pastikan kegagalan tidak meninggalkan data parsial. Temuan ini dicatat sebagai backlog pengembangan dan bukan bagian dari F1-05.
 - [ ] Simpan koneksi OAuth secara aman dan sesuai siklus hidup pengguna.
 - [ ] Mapping Workspace, Space, Folder, List, Task, Member, dan Assignee.
 - [ ] Mapping status, prioritas, due date, serta dependency jika didukung sumber.
