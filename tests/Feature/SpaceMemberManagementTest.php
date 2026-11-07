@@ -181,6 +181,49 @@ class SpaceMemberManagementTest extends TestCase
         ]);
     }
 
+    public function test_removing_space_member_also_unassigns_their_tasks_in_that_space(): void
+    {
+        [$owner, $space] = $this->createOwnedSpace();
+        $member = User::factory()->create();
+
+        $space->members()->attach($member->id, [
+            'invited_by' => $owner->id,
+        ]);
+
+        $list = TaskList::create([
+            'uuid' => (string) Str::uuid(),
+            'space_id' => $space->id,
+            'name' => 'List Penugasan',
+            'slug' => 'list-penugasan',
+            'is_active' => true,
+        ]);
+
+        $task = Task::create([
+            'uuid' => (string) Str::uuid(),
+            'workspace_id' => $space->workspace_id,
+            'space_id' => $space->id,
+            'list_id' => $list->id,
+            'title' => 'Task untuk Anggota',
+            'created_by' => $owner->id,
+        ]);
+
+        $task->assignees()->attach($member->id);
+
+        $this->actingAs($owner)
+            ->delete(route('spaces.members.destroy', [$space, $member]))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('space_members', [
+            'space_id' => $space->id,
+            'user_id' => $member->id,
+        ]);
+
+        $this->assertDatabaseMissing('task_assignees', [
+            'task_id' => $task->id,
+            'user_id' => $member->id,
+        ]);
+    }
+
     public function test_database_requires_an_owner_for_every_space(): void
     {
         $owner = User::factory()->create();
