@@ -1,3 +1,9 @@
+const APP_BASE_PATH = document.querySelector('meta[name="app-base-path"]')?.content.replace(/\/+$/, '') ?? '';
+
+function appPath(path) {
+    return `${APP_BASE_PATH}/${String(path).replace(/^\/+/, '')}`;
+}
+
 function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('open');
 }
@@ -85,7 +91,7 @@ async function openTaskModal(task = 'New Task') {
     try {
 
         const response = await fetch(
-            '/tasks/' + taskId,
+            appPath('tasks/' + taskId),
             {
                 headers: {
                     'Accept': 'application/json'
@@ -424,7 +430,7 @@ async function saveTask() {
             'POST';
 
         form.action =
-            '/tasks/' + taskId;
+            appPath('tasks/' + taskId);
 
         form.innerHTML = `
 
@@ -542,7 +548,7 @@ async function saveTask() {
         'POST';
 
     form.action =
-        '/tasks';
+        appPath('tasks');
 
     form.innerHTML = `
 
@@ -683,7 +689,7 @@ function deleteTask() {
         'POST';
 
     form.action =
-        '/tasks/' + taskId;
+        appPath('tasks/' + taskId);
 
     form.innerHTML = `
 
@@ -971,7 +977,7 @@ async function saveKanbanOrder() {
 
         const response =
             await fetch(
-                '/tasks/reorder',
+                appPath('tasks/reorder'),
                 {
                     method: 'PATCH',
 
@@ -1095,9 +1101,7 @@ async function updateTaskStatus(
 
         const response =
             await fetch(
-                '/tasks/' +
-                taskId +
-                '/status',
+                appPath('tasks/' + taskId + '/status'),
                 {
                     method: 'PATCH',
 
@@ -1356,8 +1360,7 @@ async function saveSubtask() {
         if (subtaskId) {
 
             url =
-                '/subtasks/' +
-                subtaskId;
+                appPath('subtasks/' + subtaskId);
 
             method =
                 'PUT';
@@ -1365,9 +1368,7 @@ async function saveSubtask() {
         } else {
 
             url =
-                '/tasks/' +
-                taskId +
-                '/subtasks';
+                appPath('tasks/' + taskId + '/subtasks');
 
             method =
                 'POST';
@@ -1484,8 +1485,7 @@ async function deleteSubtask(
 
         const response =
             await fetch(
-                '/subtasks/' +
-                subtaskId,
+                appPath('subtasks/' + subtaskId),
                 {
                     method: 'DELETE',
 
@@ -1539,8 +1539,7 @@ async function refreshTaskDetail(
 
     const response =
         await fetch(
-            '/tasks/' +
-            taskId,
+            appPath('tasks/' + taskId),
             {
                 headers: {
                     'Accept':
@@ -1889,7 +1888,7 @@ async function assignTask(
 
         const response =
             await fetch(
-                `/tasks/${taskId}/assignee`,
+                appPath(`tasks/${taskId}/assignee`),
                 {
                     method: 'PATCH',
 
@@ -2334,9 +2333,7 @@ async function saveDependencyWithType() {
 
         const response =
             await fetch(
-                '/tasks/' +
-                targetTaskId +
-                '/dependency',
+                appPath('tasks/' + targetTaskId + '/dependency'),
                 {
                     method: 'POST',
 
