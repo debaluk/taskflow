@@ -267,6 +267,7 @@ class FolderController extends Controller
         abort_unless(
             (int) $workspace->id === 1 &&
             (int) $space->workspace_id === (int) $workspace->id &&
+            $space->is_active &&
             $space->isAccessibleBy((int) auth()->id()),
             403
         );
