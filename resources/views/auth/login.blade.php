@@ -4,14 +4,26 @@
 
 @section('content')
 
-<div class="auth-page">
+<div class="auth-page auth-login-page">
+
+    <div class="auth-brand">
+        <img
+            src="{{ asset('images/brand/logo-horizontal.svg') }}"
+            alt="TaskFlow"
+            class="auth-brand-logo"
+            width="205"
+            height="50"
+        >
+        <h1>Selamat datang kembali</h1>
+        <p class="auth-tagline">Work Smarter. Flow Better.</p>
+    </div>
 
     <div class="panel auth-card">
 
         <div class="panel-head">
             <div>
-                <h2>Login</h2>
-                <p>Masuk ke TaskFlow</p>
+                <h2>Masuk ke akun Anda</h2>
+                <p>Lanjutkan pekerjaan dan kolaborasi Anda di TaskFlow.</p>
             </div>
         </div>
 
@@ -38,6 +50,7 @@
                     class="form-control"
                     value="{{ old('email') }}"
                     autocomplete="email"
+                    placeholder="nama@email.com"
                     required
                     autofocus
                 >
@@ -52,12 +65,13 @@
                     name="password"
                     class="form-control"
                     autocomplete="current-password"
+                    placeholder="Masukkan password"
                     required
                 >
             </div>
 
             <button type="submit" class="btn primary auth-submit">
-                Login
+                Masuk ke TaskFlow
             </button>
 
         </form>
@@ -68,6 +82,8 @@
         </div>
 
     </div>
+
+    <p class="auth-footer">Ruang kerja yang lebih teratur dimulai dari sini.</p>
 
 </div>
 
