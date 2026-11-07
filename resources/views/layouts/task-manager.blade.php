@@ -130,15 +130,6 @@
         $taskViewParams['list_id'] = $currentList->id;
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | SYSTEM USERS
-    |--------------------------------------------------------------------------
-    */
-
-    $systemUsers = \App\Models\User::query()
-        ->orderBy('name')
-        ->get();
 @endphp
 
 
@@ -2475,9 +2466,6 @@ window.taskContext = {
 };
 
 
-window.systemUsers =
-    @json($systemUsers);
-
 </script>
 
 
@@ -2495,9 +2483,6 @@ window.taskContext = {
 
 };
 
-
-window.systemUsers =
-    @json($systemUsers);
 
 
 /*

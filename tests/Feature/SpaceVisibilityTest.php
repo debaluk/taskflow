@@ -34,6 +34,21 @@ class SpaceVisibilityTest extends TestCase
             ->assertDontSee($space->name);
     }
 
+    public function test_layout_does_not_expose_unrelated_registered_user_details(): void
+    {
+        [$owner, $space] = $this->createSpace();
+        $outsider = User::factory()->create([
+            'name' => 'Pengguna di luar Space',
+            'email' => 'outsider-private@example.test',
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('spaces.index'))
+            ->assertOk()
+            ->assertDontSee($outsider->name)
+            ->assertDontSee($outsider->email);
+    }
+
     public function test_space_member_can_view_space_but_unrelated_user_cannot_open_it(): void
     {
         [$owner, $space] = $this->createSpace();
