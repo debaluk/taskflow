@@ -151,8 +151,9 @@ class TaskAuthorizationTest extends TestCase
                 'description' => 'Detail diperbarui',
                 'status' => 'open',
                 'priority' => 'high',
+                'return_url' => 'https://evil.example/phishing',
             ])
-            ->assertRedirect();
+            ->assertRedirect(route('tasks.index'));
 
         $this->assertDatabaseHas('tasks', [
             'id' => $task->id,
@@ -160,8 +161,10 @@ class TaskAuthorizationTest extends TestCase
         ]);
 
         $this->actingAs($owner)
-            ->delete(route('tasks.destroy', $task))
-            ->assertRedirect();
+            ->delete(route('tasks.destroy', $task), [
+                'return_url' => 'https://evil.example/phishing',
+            ])
+            ->assertRedirect(route('tasks.index'));
 
         $this->assertSoftDeleted('tasks', ['id' => $task->id]);
     }
