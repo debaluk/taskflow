@@ -147,6 +147,12 @@ async function openTaskModal(task = 'New Task') {
         );
 
         setTaskModalPermissions(data.permissions ?? {}, false);
+
+        if (!data.permissions?.manage) {
+            document.getElementById('modalTitle').textContent =
+                data.permissions?.update_status ? 'Task — Update Status' : 'Task Details';
+        }
+
         renderTaskNotes(data.notes ?? []);
 
     } catch (error) {
