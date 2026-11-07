@@ -166,6 +166,68 @@ class SpaceStructureAuthorizationTest extends TestCase
         ]);
     }
 
+    public function test_folder_with_active_children_or_lists_cannot_be_deleted(): void
+    {
+        [$owner, $space, $workspace] = $this->createSpace();
+
+        $folder = Folder::create([
+            'uuid' => (string) Str::uuid(),
+            'workspace_id' => $workspace->id,
+            'space_id' => $space->id,
+            'name' => 'Folder Induk',
+            'slug' => 'folder-induk',
+            'is_active' => true,
+        ]);
+
+        Folder::create([
+            'uuid' => (string) Str::uuid(),
+            'workspace_id' => $workspace->id,
+            'space_id' => $space->id,
+            'parent_id' => $folder->id,
+            'name' => 'Subfolder Aktif',
+            'slug' => 'subfolder-aktif',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($owner)
+            ->delete(route('folders.destroy', [$workspace, $space, $folder]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseHas('folders', [
+            'id' => $folder->id,
+            'deleted_at' => null,
+        ]);
+
+        $child = $folder->children()->firstOrFail();
+
+        $child->delete();
+
+        $list = TaskList::create([
+            'uuid' => (string) Str::uuid(),
+            'space_id' => $space->id,
+            'folder_id' => $folder->id,
+            'name' => 'List Aktif',
+            'slug' => 'list-aktif',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($owner)
+            ->delete(route('folders.destroy', [$workspace, $space, $folder]))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseHas('folders', [
+            'id' => $folder->id,
+            'deleted_at' => null,
+        ]);
+
+        $this->assertDatabaseHas('task_lists', [
+            'id' => $list->id,
+            'deleted_at' => null,
+        ]);
+    }
+
     public function test_folder_cannot_be_moved_under_its_own_descendant(): void
     {
         [$owner, $space, $workspace] = $this->createSpace();
