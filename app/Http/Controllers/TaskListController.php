@@ -288,6 +288,7 @@ class TaskListController extends Controller
     ): void {
         abort_unless(
             (int) $space->workspace_id === self::WORKSPACE_ID &&
+            $space->is_active &&
             $space->isAccessibleBy((int) auth()->id()),
             404
         );
