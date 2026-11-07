@@ -116,6 +116,12 @@ class FolderController extends Controller
                 ->firstOrFail();
 
             $parentId = $parent->id;
+
+            abort_if(
+                $this->isDescendantOf($folder, $parentId),
+                422,
+                'Folder tidak dapat dipindahkan ke dalam turunannya sendiri.'
+            );
         }
 
         $folder->update([
@@ -176,6 +182,41 @@ class FolderController extends Controller
     }
 
     /**
+     * Periksa apakah calon parent merupakan turunan dari Folder saat ini.
+     */
+    private function isDescendantOf(
+        Folder $folder,
+        int $candidateParentId
+    ): bool {
+        $frontier = [$folder->id];
+        $visited = [];
+
+        while ($frontier !== []) {
+            $frontier = array_values(array_diff($frontier, $visited));
+
+            if ($frontier === []) {
+                break;
+            }
+
+            $visited = array_merge($visited, $frontier);
+
+            $children = Folder::withTrashed()
+                ->whereIn('parent_id', $frontier)
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+
+            if (in_array($candidateParentId, $children, true)) {
+                return true;
+            }
+
+            $frontier = $children;
+        }
+
+        return false;
+    }
+
+    /**
      * Buat slug unik dalam Space agar duplikasi nama tidak menjadi SQL error.
      */
     private function uniqueFolderSlug(
@@ -193,7 +234,7 @@ class FolderController extends Controller
         $counter = 2;
 
         while (
-            Folder::query()
+            Folder::withTrashed()
                 ->where('space_id', $space->id)
                 ->where('slug', $slug)
                 ->when($ignoreFolderId, function ($query) use ($ignoreFolderId) {
