@@ -5,6 +5,7 @@ use App\Http\Controllers\MemberController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\SpaceController;
+use App\Http\Controllers\SpaceMemberController;
 use App\Http\Controllers\FolderController;
 use App\Http\Controllers\TaskListController;
 use App\Http\Controllers\SettingsController;
