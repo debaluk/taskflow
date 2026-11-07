@@ -132,6 +132,26 @@ Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Dur
   - Jangan mengubah tabel `members` global yang telah digunakan untuk identitas/relasi ClickUp menjadi pivot keanggotaan Space. Audit pemakaiannya dan buat relasi Space tersendiri bila diperlukan.
   - Kriteria penerimaan: request tanpa hak akses ditolak konsisten; pembuat, assignee, dan Owner memperoleh hak sesuai matriks; manipulasi URL/request tidak dapat melewati aturan.
 
+  - **Status audit: In Progress (8 November 2026).** Audit awal source F1-02 telah dimulai pada branch `main`. Belum ada perubahan kode atau database pada tahap audit ini.
+  - **Temuan audit awal (8 November 2026):**
+    - `spaces.owner_id` sudah memiliki kolom melalui migration, tetapi kolom dibuat nullable dan tidak memiliki foreign key ke `users`.
+    - `Space::$fillable` belum memuat `owner_id`. Padahal `SpaceController::store()` mengirim `owner_id = auth()->id()`; akibat mass assignment, Owner berisiko tidak tersimpan.
+    - `SpaceController::index()` mengambil seluruh Space pada Workspace ID 1 tanpa filter Owner/Member. `show()` hanya memeriksa Workspace ID 1.
+    - `SpaceController::authorizeSpace()` masih mengizinkan Space dengan `owner_id = null` untuk diubah/dinonaktifkan/dihapus oleh user terautentikasi mana pun. Ini tidak sesuai matriks hak Owner.
+    - Belum ditemukan migration/model/relasi khusus `space_members`. Keanggotaan Space belum memiliki sumber data sendiri.
+    - `TaskManagerController::authorizeTask()` baru memeriksa `workspace_id = 1` dan session Workspace; belum memeriksa membership Space, `created_by`, atau `task_assignees`. Akibatnya, endpoint update/delete/status/assignment/Subtask/Dependency yang mengandalkan method ini belum menerapkan matriks hak.
+    - Query Dashboard/List/Board/Calendar/Gantt dan `listPage()` masih membatasi data berdasarkan Workspace/Space yang diminta, bukan daftar Space yang boleh diakses user.
+    - Pembuatan Task memeriksa List dan Space dalam Workspace 1, tetapi belum memastikan pembuat merupakan Owner/Member Space.
+    - Assignment saat ini memeriksa `workspace_members`, bukan keanggotaan Space; ini bertentangan dengan keputusan bahwa assignment hanya kepada anggota Space terkait.
+    - `FolderController::authorizeWorkspace()` masih bergantung pada `workspace_members`, sedangkan `TaskListController::authorizeSpace()` hanya memeriksa Workspace ID 1. Otorisasi Folder dan List belum konsisten dengan Space.
+    - Tabel/model `members` adalah relasi global `user_id` dengan `clickup_user_id` dan dipakai oleh `MemberController`; tabel ini tidak boleh dialihfungsikan menjadi pivot keanggotaan Space.
+    - Route yang diperiksa belum menunjukkan endpoint untuk menambahkan note pada Task. Hak assignee untuk menambahkan note perlu menunggu audit/implementasi fitur note; jangan memberikan hak edit detail sebagai pengganti.
+    - Dependency memanggil `authorizeTask()` pada kedua Task yang terhubung dan memeriksa keduanya berada di Space yang sama jika `space_id` terisi. Namun, karena `authorizeTask()` belum menerapkan akses Space/role, batas otorisasinya belum cukup.
+    - Reorder memvalidasi Task berada pada context Workspace/Space/List yang dikirim, tetapi belum memeriksa hak Owner/pembuat. Operasi ini harus mengikuti hak edit Task dan tidak boleh menjadi jalur perubahan status bagi assignee-only di luar aturan.
+  - **Implikasi dan urutan implementasi yang perlu dipertahankan:** mulai dari fondasi Owner dan relasi Space, lanjut pivot `space_members`, manajemen anggota Space, helper/policy otorisasi Task, lalu pengamanan Folder/List, Task, Subtask, Dependency, Assignment, dan Reorder. Tambahkan feature test untuk setiap kombinasi Owner, Member pembuat, Member assignee-only, serta user tanpa akses.
+  - **Catatan data:** sesuai keputusan sebelumnya, belum ada data Space lama yang perlu di-backfill. Space baru harus menyimpan Owner pembuatnya dan relasi anggota awal dimulai kosong; Workspace tetap ID 1.
+  - **Belum dilakukan:** belum ada migration baru, perubahan model/controller, penghapusan data, atau perubahan konfigurasi VPS. Temuan ini berasal dari audit source GitHub, bukan verifikasi database produksi.
+  
 - [ ] **F1-03 — Rapikan definisi route**
   - Verifikasi route detail Task yang terduplikasi.
   - Hapus definisi duplikat setelah dipastikan tidak ada perbedaan middleware atau perilaku.
