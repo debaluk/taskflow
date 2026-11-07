@@ -31,8 +31,12 @@ class TaskAuthorizationTest extends TestCase
                 'status' => 'open',
                 'priority' => 'normal',
                 'list_id' => $list->id,
+                'return_url' => 'https://evil.example/phishing',
             ])
-            ->assertRedirect();
+            ->assertRedirect(route('tasks.index', [
+                'space_id' => $space->id,
+                'list_id' => $list->id,
+            ]));
 
         $this->assertDatabaseHas('tasks', [
             'space_id' => $space->id,
