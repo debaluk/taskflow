@@ -4,8 +4,7 @@
     'title',
     $taskList?->name
         ?? $space?->name
-        ?? $workspace?->name
-        ?? 'Task Management'
+        ?? 'TaskFlow'
 )
 
 @section(
@@ -200,7 +199,7 @@ $taskModalData = function ($task) {
 
             @else
 
-                {{ $currentWorkspace?->name ?? 'Workspace' }}
+                {{ 'TaskFlow' }}
 
             @endif
 
