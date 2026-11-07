@@ -6,8 +6,12 @@
     --muted:#747b87;
     --primary:#4f46e5;
     --primary-soft:#eef0ff;
-    --sidebar:#17191f;
-    --sidebar-text:#c8ccd4;
+    --sidebar:#ffffff;
+    --sidebar-text:#4b5563;
+    --sidebar-muted:#8b93a1;
+    --sidebar-hover:#f3f4f8;
+    --sidebar-active-bg:#eef0ff;
+    --sidebar-border:#e6e8ed;
     --shadow:0 8px 28px rgba(22,27,38,.07);
 }
 
