@@ -11,13 +11,57 @@ class ClickUpOAuthValidationTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_connect_generates_and_sends_a_session_bound_state(): void
+    {
+        $user = User::factory()->create();
+
+        config([
+            'services.clickup.client_id' => 'test-client',
+            'services.clickup.redirect_uri' => 'https://example.test/callback',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('settings.clickup.connect'));
+
+        $response->assertRedirect();
+
+        $redirect = $response->headers->get('Location');
+        parse_str((string) parse_url($redirect, PHP_URL_QUERY), $query);
+
+        $this->assertSame('test-client', $query['client_id'] ?? null);
+        $this->assertSame('https://example.test/callback', $query['redirect_uri'] ?? null);
+        $this->assertIsString($query['state'] ?? null);
+        $this->assertSame(64, strlen($query['state']));
+        $this->assertSame($query['state'], session('clickup_oauth_state'));
+    }
+
+    public function test_callback_rejects_missing_or_mismatched_state_without_calling_provider(): void
+    {
+        $user = User::factory()->create();
+        Http::fake();
+
+        $this->actingAs($user)
+            ->withSession(['clickup_oauth_state' => 'expected-state'])
+            ->get(route('settings.clickup.callback', [
+                'state' => 'attacker-state',
+                'code' => 'authorization-code',
+            ]))
+            ->assertRedirect(route('settings'))
+            ->assertSessionHas('error', 'Validasi keamanan koneksi ClickUp gagal. Silakan coba hubungkan kembali.');
+
+        Http::assertNothingSent();
+        $this->assertSame('expected-state', session('clickup_oauth_state'));
+    }
+
     public function test_callback_rejects_non_string_authorization_code_without_calling_provider(): void
     {
         $user = User::factory()->create();
         Http::fake();
 
         $this->actingAs($user)
+            ->withSession(['clickup_oauth_state' => 'test-state'])
             ->get(route('settings.clickup.callback', [
+                'state' => 'test-state',
                 'code' => ['invalid'],
             ]))
             ->assertRedirect(route('settings'))
@@ -42,7 +86,9 @@ class ClickUpOAuthValidationTest extends TestCase
         ]);
 
         $this->actingAs($user)
+            ->withSession(['clickup_oauth_state' => 'test-state'])
             ->get(route('settings.clickup.callback', [
+                'state' => 'test-state',
                 'code' => 'valid-looking-code',
             ]))
             ->assertRedirect(route('settings'))
