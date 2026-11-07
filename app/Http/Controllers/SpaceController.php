@@ -153,10 +153,13 @@ class SpaceController extends Controller
             ->where('space_id', $space->id)
             ->count();
 
-        if ($taskCount > 0) {
+        $folderCount = $space->folders()->count();
+        $listCount = $space->taskLists()->count();
+
+        if ($taskCount > 0 || $folderCount > 0 || $listCount > 0) {
             return back()->with(
                 'error',
-                "Space \"{$space->name}\" tidak dapat dihapus karena masih memiliki {$taskCount} Task. Hapus atau pindahkan Task terlebih dahulu."
+                "Space \"{$space->name}\" tidak dapat dihapus karena masih memiliki {$taskCount} Task, {$folderCount} Folder, dan {$listCount} List aktif. Hapus atau pindahkan seluruh data tersebut terlebih dahulu."
             );
         }
 
