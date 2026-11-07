@@ -186,11 +186,14 @@ Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Dur
   - `RouteDefinitionTest` memastikan GET `tasks/{task}` terdaftar tepat satu kali dengan nama `tasks.show`.
   - **Status F1-03: Done (8 November 2026).** GitHub Actions run `42405067475` berstatus **success**: **23 test passed (86 assertions)**.
 
-- [ ] **F1-04 — Bangun pengujian alur inti**
-  - Siapkan feature test untuk autentikasi dan akses Workspace.
-  - Uji CRUD Task, perubahan status/prioritas, assignment, Subtask, dan Dependency.
-  - Uji pembatasan akses lintas pengguna/Workspace.
-  - Siapkan dan pelihara GitHub Actions untuk menjalankan test suite secara otomatis pada push ke `main` dan Pull Request menuju `main`; pengujian tidak bergantung pada PHPUnit di VPS produksi.
+- [ ] **F1-04 — Bangun pengujian alur inti (In Progress)**
+  - `AuthFlowTest`: registrasi, login, logout, dan penolakan kredensial yang salah.
+  - `TaskAuthorizationTest`: matriks Owner/creator/assignee/member/outsider, status, note, assignment, serta larangan akses yang tidak sesuai.
+  - `TaskWorkflowTest`: create Task oleh Member, lifecycle Subtask, lifecycle Dependency, larangan Dependency lintas-Space, Reorder, dan larangan pembuatan Task oleh user tanpa akses Space.
+  - `SpaceMemberManagementTest`, `SpaceMembershipFoundationTest`, `SpaceVisibilityTest`, `ActivityVisibilityTest`, `RouteDefinitionTest`, dan `WorkspaceContextTest` menguji fondasi Space, akses data, Activity Feed, serta route.
+  - GitHub Actions berjalan otomatis pada push ke `main` dan Pull Request menuju `main`; tidak memerlukan PHPUnit pada VPS produksi.
+  - **Hasil CI terbaru:** run `42405433772` berstatus **success**: **32 test passed (125 assertions)**.
+  - **Masih perlu ditambah:** skenario end-to-end UI dan cakupan beberapa operasi Folder/List serta akses objek lintas-Space yang lebih luas.
   - Kriteria penerimaan: skenario inti berjalan otomatis, workflow CI berstatus sukses, dan hasil pengujian dapat diulang.
 
 ### Ketentuan Role dan Hak Akses Space (keputusan produk)
