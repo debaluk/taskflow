@@ -1817,6 +1817,12 @@ class TaskManagerController extends Controller
             ]);
         }
 
+        abort_if(
+            $this->wouldCreateDependencyCycle($task->id, $dependsOnTaskId),
+            422,
+            'Dependency tidak boleh membentuk siklus antar-Task.'
+        );
+
         $dependency = $task->dependencies()->create([
             'depends_on_task_id' => $dependsOnTaskId,
             'dependency_type' => $dependencyType,
@@ -1839,6 +1845,40 @@ class TaskManagerController extends Controller
     // =========================================================
     // DELETE DEPENDENCY
     // =========================================================
+
+    /**
+     * Periksa apakah menambahkan dependency akan membentuk siklus.
+     * A -> B berarti Task A bergantung pada Task B.
+     */
+    private function wouldCreateDependencyCycle(
+        int $taskId,
+        int $dependsOnTaskId
+    ): bool {
+        $frontier = [$dependsOnTaskId];
+        $visited = [];
+
+        while ($frontier !== []) {
+            $frontier = array_values(array_diff($frontier, $visited));
+
+            if ($frontier === []) {
+                break;
+            }
+
+            if (in_array($taskId, $frontier, true)) {
+                return true;
+            }
+
+            $visited = array_merge($visited, $frontier);
+
+            $frontier = TaskDependency::query()
+                ->whereIn('task_id', $frontier)
+                ->pluck('depends_on_task_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+        }
+
+        return false;
+    }
 
     public function destroyDependency(
         Task $task,
