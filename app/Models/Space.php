@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Space extends Model
 {
@@ -14,6 +15,7 @@ class Space extends Model
     protected $fillable = [
         'uuid',
         'workspace_id',
+        'owner_id',
         'name',
         'slug',
         'description',
@@ -27,6 +29,23 @@ class Space extends Model
     public function workspace(): BelongsTo
     {
         return $this->belongsTo(Workspace::class);
+    }
+
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(SpaceMember::class);
+    }
+
+    public function members(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'space_members')
+            ->withPivot('invited_by')
+            ->withTimestamps();
     }
 
     public function folders(): HasMany
