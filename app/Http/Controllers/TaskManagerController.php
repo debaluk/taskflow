@@ -669,9 +669,38 @@ class TaskManagerController extends Controller
             'assignees',
         ]);
 
+        $canManage = $task->space->isOwnedBy((int) auth()->id()) ||
+            (int) $task->created_by === (int) auth()->id();
+        $isAssignee = $task->assignees()
+            ->whereKey(auth()->id())
+            ->exists();
+
+        $notes = Activity::query()
+            ->with('user')
+            ->where('workspace_id', $task->workspace_id)
+            ->where('subject_type', Task::class)
+            ->where('subject_id', $task->id)
+            ->where('action', 'task_note')
+            ->latest()
+            ->get()
+            ->map(function (Activity $activity) {
+                return [
+                    'id' => $activity->id,
+                    'user' => $activity->user?->name ?? 'Pengguna',
+                    'description' => $activity->description,
+                    'created_at' => $activity->created_at,
+                ];
+            });
+
         return response()->json([
             'success' => true,
             'task' => $task,
+            'permissions' => [
+                'manage' => $canManage,
+                'update_status' => $canManage || $isAssignee,
+                'add_note' => $canManage || $isAssignee,
+            ],
+            'notes' => $notes,
         ]);
     }
 
