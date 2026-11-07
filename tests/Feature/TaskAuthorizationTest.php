@@ -265,6 +265,31 @@ class TaskAuthorizationTest extends TestCase
         ]);
     }
 
+    public function test_deleting_parent_task_soft_deletes_all_nested_subtasks(): void
+    {
+        [$owner, $space, $list] = $this->createSpace();
+        $creator = User::factory()->create();
+
+        $space->members()->attach($creator->id, [
+            'invited_by' => $owner->id,
+        ]);
+
+        $parent = $this->createTask($space, $list, $creator);
+        $child = $this->createTask($space, $list, $creator);
+        $child->update(['parent_id' => $parent->id]);
+
+        $grandchild = $this->createTask($space, $list, $creator);
+        $grandchild->update(['parent_id' => $child->id]);
+
+        $this->actingAs($creator)
+            ->delete(route('tasks.destroy', $parent))
+            ->assertRedirect();
+
+        $this->assertSoftDeleted('tasks', ['id' => $parent->id]);
+        $this->assertSoftDeleted('tasks', ['id' => $child->id]);
+        $this->assertSoftDeleted('tasks', ['id' => $grandchild->id]);
+    }
+
     public function test_unrelated_user_cannot_view_or_change_task(): void
     {
         [$owner, $space, $list] = $this->createSpace();

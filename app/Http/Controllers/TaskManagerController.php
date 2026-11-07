@@ -11,6 +11,7 @@ use App\Models\TaskList;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class TaskManagerController extends Controller
@@ -1185,7 +1186,34 @@ class TaskManagerController extends Controller
         ]);
 
 
-        $task->delete();
+        DB::transaction(function () use ($task) {
+            $frontier = collect([$task->id]);
+            $descendantIds = collect([$task->id]);
+
+            while ($frontier->isNotEmpty()) {
+                $children = Task::withTrashed()
+                    ->whereIn('parent_id', $frontier)
+                    ->whereNotIn('id', $descendantIds)
+                    ->pluck('id');
+
+                if ($children->isEmpty()) {
+                    break;
+                }
+
+                $descendantIds = $descendantIds->merge($children);
+                $frontier = $children;
+            }
+
+            Task::withTrashed()
+                ->whereIn('id', $descendantIds->reject(fn ($id) => $id === $task->id))
+                ->whereNull('deleted_at')
+                ->update([
+                    'deleted_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+            $task->delete();
+        });
 
         $returnUrl = $this->safeReturnUrl(
             $request->input('return_url'),

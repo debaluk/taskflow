@@ -280,6 +280,10 @@ Aturan tambahan:
   - **Pengujian regresi ditambahkan:** `SpaceVisibilityTest::test_inactive_space_blocks_folder_and_task_list_access()` memastikan Space nonaktif menolak pembacaan dan pembuatan Folder/List serta tidak menyimpan data baru.
   - **Commit koreksi:** `5013aa0` (Folder), `2e6bd3e` (Task List), dan `d385356` (feature test). Hasil CI untuk perubahan ini menunggu verifikasi; status F1-05 tetap **In Progress**.
 
+  - **Temuan dan koreksi penghapusan Task induk (8 November 2026):** sebelumnya penghapusan Task induk hanya melakukan soft-delete pada record induk, sehingga Subtask aktif tetap tersimpan tanpa induk aktif. Penghapusan kini menjalankan soft-delete secara rekursif terhadap seluruh keturunan Subtask (termasuk level bertingkat) dalam satu transaksi database. Subtask yang sebelumnya sudah soft-deleted tetap ditelusuri agar keturunan aktifnya tidak tertinggal.
+  - **Regression test:** `TaskAuthorizationTest::test_deleting_parent_task_soft_deletes_all_nested_subtasks()` memastikan Task induk, Subtask, dan Subtask bertingkat seluruhnya ter-soft-delete saat induk dihapus.
+  - **Status:** implementasi dan test ditambahkan; menunggu verifikasi CI. F1-05 tetap **In Progress**.
+
 - [ ] **F1-06 — Audit relasi dan integritas data**
   - Periksa relasi parent–subtask, assignee, dependency, dan struktur Workspace.
   - Tinjau perilaku penghapusan dan foreign key agar tidak meninggalkan data yatim.
