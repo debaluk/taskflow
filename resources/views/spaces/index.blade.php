@@ -208,6 +208,14 @@ DATATABLES CSS
                         "
                     >
 
+                        <a
+                            href="{{ route('spaces.members.index', $space) }}"
+                            class="btn ghost"
+                            style="margin-right:5px;"
+                        >
+                            Anggota
+                        </a>
+
                         <button
                             type="button"
                             class="btn ghost"
