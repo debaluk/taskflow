@@ -16,6 +16,52 @@ use Illuminate\Support\Str;
 class TaskManagerController extends Controller
 {
     /**
+     * Hanya izinkan URL kembali pada host aplikasi yang sedang diakses.
+     */
+    private function safeReturnUrl(?string $candidate, string $fallback): string
+    {
+        if ($candidate === null || trim($candidate) === '') {
+            return $fallback;
+        }
+
+        if (str_starts_with($candidate, '//')) {
+            return $fallback;
+        }
+
+        $parts = parse_url($candidate);
+
+        if ($parts === false || isset($parts['user']) || isset($parts['pass'])) {
+            return $fallback;
+        }
+
+        if (isset($parts['scheme'])) {
+            $scheme = strtolower($parts['scheme']);
+
+            if (! in_array($scheme, ['http', 'https'], true) || ! isset($parts['host'])) {
+                return $fallback;
+            }
+        }
+
+        if (isset($parts['host'])) {
+            if (strcasecmp($parts['host'], request()->getHost()) !== 0) {
+                return $fallback;
+            }
+
+            $candidatePort = $parts['port'] ?? (
+                strtolower($parts['scheme'] ?? request()->getScheme()) === 'https'
+                    ? 443
+                    : 80
+            );
+
+            if ((int) $candidatePort !== (int) request()->getPort()) {
+                return $fallback;
+            }
+        }
+
+        return $candidate;
+    }
+
+    /**
 	 * ID scope yang boleh diakses user login.
 	 */
 	private function accessibleWorkspaceIds()
@@ -740,6 +786,7 @@ class TaskManagerController extends Controller
             'due_date' => [
                 'nullable',
                 'date',
+                'after_or_equal:start_date',
             ],
 
             'list_id' => [
@@ -841,17 +888,18 @@ class TaskManagerController extends Controller
 
         event(new TaskCreated($task));
 
-        $returnUrl = $request->input('return_url');
+        $fallbackUrl = route(
+            'tasks.index',
+            [
+                'space_id' => $space->id,
+                'list_id' => $taskList->id,
+            ]
+        );
 
-        if (!$returnUrl) {
-            $returnUrl = route(
-                'tasks.index',
-                [
-                    'space_id' => $space->id,
-                    'list_id' => $taskList->id,
-                ]
-            );
-        }
+        $returnUrl = $this->safeReturnUrl(
+            $request->input('return_url'),
+            $fallbackUrl
+        );
 
         return redirect($returnUrl)
             ->with(
@@ -900,6 +948,7 @@ class TaskManagerController extends Controller
             'due_date' => [
                 'nullable',
                 'date',
+                'after_or_equal:start_date',
             ],
         ]);
 
@@ -920,11 +969,12 @@ class TaskManagerController extends Controller
             'updated_by' => auth()->id(),
         ]);
 
-        $returnUrl = $request->input('return_url');
+        $returnUrl = $this->safeReturnUrl(
+            $request->input('return_url'),
+            route('tasks.index')
+        );
 
-        return redirect(
-            $returnUrl ?: route('tasks.index')
-        )->with(
+        return redirect($returnUrl)->with(
             'success',
             'Task berhasil diperbarui.'
         );
@@ -1108,11 +1158,12 @@ class TaskManagerController extends Controller
 
         $task->delete();
 
-        $returnUrl = $request->input('return_url');
+        $returnUrl = $this->safeReturnUrl(
+            $request->input('return_url'),
+            route('tasks.index')
+        );
 
-        return redirect(
-            $returnUrl ?: route('tasks.index')
-        )->with(
+        return redirect($returnUrl)->with(
             'success',
             'Task berhasil dihapus.'
         );
@@ -1362,6 +1413,7 @@ class TaskManagerController extends Controller
             'columns.*.tasks.*' => [
                 'required',
                 'integer',
+                'distinct',
                 'exists:tasks,id',
             ],
         ]);
