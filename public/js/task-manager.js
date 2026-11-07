@@ -59,6 +59,12 @@ async function openTaskModal(task = 'New Task') {
          * saat membuka task baru.
          */
         renderSubtasks([]);
+        setTaskModalPermissions({
+            manage: true,
+            update_status: true,
+            add_note: false,
+        }, true);
+        renderTaskNotes([]);
 
         modal.classList.remove('hidden');
 
@@ -140,6 +146,9 @@ async function openTaskModal(task = 'New Task') {
             detail.subtasks ?? []
         );
 
+        setTaskModalPermissions(data.permissions ?? {}, false);
+        renderTaskNotes(data.notes ?? []);
+
     } catch (error) {
 
         console.error(error);
@@ -150,6 +159,187 @@ async function openTaskModal(task = 'New Task') {
         );
 
         closeTaskModal();
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| TASK MODAL PERMISSIONS
+|--------------------------------------------------------------------------
+*/
+
+function setTaskModalPermissions(permissions, isNewTask = false) {
+    const canManage = Boolean(permissions.manage);
+    const canUpdateStatus = Boolean(permissions.update_status);
+
+    const fields = [
+        'modalTaskTitle',
+        'modalDescription',
+        'modalPriority',
+        'modalStartDate',
+        'modalDueDate',
+    ];
+
+    fields.forEach(id => {
+        const field = document.getElementById(id);
+        if (field) field.disabled = !canManage;
+    });
+
+    const status = document.getElementById('modalStatus');
+    if (status) status.disabled = !canUpdateStatus;
+
+    const setHidden = (id, hidden) => {
+        const element = document.getElementById(id);
+        if (element) element.classList.toggle('hidden', hidden);
+    };
+
+    setHidden('saveTaskButton', !canManage);
+    setHidden('deleteTaskButton', !canManage || isNewTask);
+    setHidden('taskSubtasksSection', !canManage || isNewTask);
+    setHidden('updateTaskStatusButton', !canManage && canUpdateStatus);
+
+    const noteSection = document.getElementById('taskNoteSection');
+    const noteForm = document.getElementById('taskNoteForm');
+    if (noteForm) noteForm.classList.toggle('hidden', !permissions.add_note);
+    if (noteSection) {
+        const hasNotes = (noteSection.dataset.hasNotes ?? 'false') === 'true';
+        noteSection.classList.toggle('hidden', !permissions.add_note && !hasNotes);
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| TASK NOTES
+|--------------------------------------------------------------------------
+*/
+
+function renderTaskNotes(notes) {
+    const section = document.getElementById('taskNoteSection');
+    const list = document.getElementById('taskNoteList');
+    if (!section || !list) return;
+
+    section.dataset.hasNotes = notes.length ? 'true' : 'false';
+
+    if (!notes.length) {
+        list.innerHTML = '<div style="color:#8a9099;">Belum ada catatan.</div>';
+    } else {
+        list.innerHTML = notes.map(note => {
+            const user = escapeHtml(note.user ?? 'Pengguna');
+            const description = escapeHtml(note.description ?? '');
+            const date = note.created_at
+                ? new Date(note.created_at).toLocaleString('id-ID')
+                : '';
+
+            return `
+                <article style="padding:10px 12px;background:#f8fafc;border-radius:8px;">
+                    <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:5px;">
+                        <strong>${user}</strong>
+                        <small style="color:#8a9099;">${escapeHtml(date)}</small>
+                    </div>
+                    <div style="white-space:pre-wrap;">${description}</div>
+                </article>
+            `;
+        }).join('');
+    }
+
+    const canAdd = document.getElementById('taskNoteForm');
+    if (canAdd && !canAdd.classList.contains('hidden')) {
+        section.classList.remove('hidden');
+    }
+}
+
+
+async function saveTaskStatus() {
+    const modal = document.getElementById('taskModal');
+    const taskId = modal?.dataset.taskId;
+    const status = document.getElementById('modalStatus')?.value;
+
+    if (!taskId) return;
+
+    const response = await fetch(appPath('tasks/' + taskId + '/status'), {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+        },
+        body: JSON.stringify({ status }),
+    });
+
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+        alert(data.message || 'Gagal memperbarui status Task.');
+        return;
+    }
+
+    alert('Status Task berhasil diperbarui.');
+}
+
+
+async function saveTaskNote() {
+    const modal = document.getElementById('taskModal');
+    const taskId = modal?.dataset.taskId;
+    const input = document.getElementById('taskNoteInput');
+    const note = input?.value.trim();
+
+    if (!taskId || !note) {
+        alert('Note tidak boleh kosong.');
+        return;
+    }
+
+    const response = await fetch(appPath('tasks/' + taskId + '/notes'), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+        },
+        body: JSON.stringify({ note }),
+    });
+
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+        alert(data.message || 'Gagal menambahkan note.');
+        return;
+    }
+
+    input.value = '';
+    const currentNotes = Array.from(
+        document.querySelectorAll('#taskNoteList article')
+    ).map(article => article.innerHTML);
+
+    const noteList = document.getElementById('taskNoteList');
+    const user = document.querySelector('meta[name="user-name"]')?.content || 'Anda';
+    const date = data.note.created_at
+        ? new Date(data.note.created_at).toLocaleString('id-ID')
+        : '';
+
+    const article = document.createElement('article');
+    article.style.cssText = 'padding:10px 12px;background:#f8fafc;border-radius:8px;';
+    const strong = document.createElement('strong');
+    strong.textContent = user;
+    const small = document.createElement('small');
+    small.style.cssText = 'color:#8a9099;margin-left:12px;';
+    small.textContent = date;
+    const body = document.createElement('div');
+    body.style.whiteSpace = 'pre-wrap';
+    body.textContent = data.note.description;
+
+    const header = document.createElement('div');
+    header.style.cssText = 'display:flex;justify-content:space-between;gap:12px;margin-bottom:5px;';
+    header.append(strong, small);
+    article.append(header, body);
+
+    const empty = noteList.querySelector('div');
+    if (empty && !noteList.querySelector('article')) empty.remove();
+    noteList.appendChild(article);
+
+    const section = document.getElementById('taskNoteSection');
+    if (section) {
+        section.dataset.hasNotes = 'true';
+        section.classList.remove('hidden');
     }
 }
 
