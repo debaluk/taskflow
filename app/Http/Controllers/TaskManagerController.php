@@ -1030,6 +1030,7 @@ class TaskManagerController extends Controller
             'note' => [
                 'id' => $activity->id,
                 'user_id' => $activity->user_id,
+                'user' => $activity->user?->name ?? 'Anda',
                 'description' => $activity->description,
                 'created_at' => $activity->created_at,
             ],
