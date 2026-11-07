@@ -221,14 +221,6 @@ Route::middleware('auth')->group(function () {
 	Route::get('/tasks/{task}', [TaskManagerController::class, 'show'])
 		->name('tasks.show');
 
-    // =========================================================
-    // TASK DETAIL
-    // HARUS PALING BAWAH SETELAH ROUTE STATIS
-    // =========================================================
-
-    Route::get('/tasks/{task}', [TaskManagerController::class, 'show'])
-        ->name('tasks.show');
-
 
     // =========================================================
     // MANAGE - ACTIVITY
