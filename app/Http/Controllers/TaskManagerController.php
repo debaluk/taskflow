@@ -24,7 +24,11 @@ class TaskManagerController extends Controller
             return $fallback;
         }
 
-        if (str_starts_with($candidate, '//')) {
+        if (
+            str_starts_with($candidate, '//') ||
+            str_contains($candidate, chr(92)) ||
+            preg_match('/[\x00-\x1F]/', $candidate)
+        ) {
             return $fallback;
         }
 
