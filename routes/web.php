@@ -92,6 +92,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/tasks/{task}/status', [TaskManagerController::class, 'updateStatus'])
         ->name('tasks.status');
 
+    Route::post('/tasks/{task}/notes', [TaskManagerController::class, 'storeNote'])
+        ->name('tasks.notes.store');
+
     Route::patch('/tasks/reorder', [TaskManagerController::class, 'reorder'])
         ->name('tasks.reorder');
 
