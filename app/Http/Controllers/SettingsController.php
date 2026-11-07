@@ -39,12 +39,12 @@ class SettingsController extends Controller
                 ->with('error', 'Koneksi ClickUp dibatalkan.');
         }
 
-        $code = $request->get('code');
+        $code = $request->input('code');
 
-        if (!$code) {
+        if (! is_string($code) || trim($code) === '' || strlen($code) > 2048) {
             return redirect()
                 ->route('settings')
-                ->with('error', 'Authorization code ClickUp tidak ditemukan.');
+                ->with('error', 'Authorization code ClickUp tidak valid.');
         }
 
         $response = Http::post(
@@ -57,9 +57,8 @@ class SettingsController extends Controller
         );
 
         if ($response->failed()) {
-            Log::error('ClickUp OAuth Token Error', [
+            Log::warning('ClickUp OAuth token request failed', [
                 'status' => $response->status(),
-                'response' => $response->json(),
             ]);
 
             return redirect()
@@ -68,6 +67,16 @@ class SettingsController extends Controller
         }
 
         $token = $response->json('access_token');
+
+        if (! is_string($token) || trim($token) === '' || strlen($token) > 4096) {
+            Log::warning('ClickUp OAuth response did not contain a valid access token', [
+                'status' => $response->status(),
+            ]);
+
+            return redirect()
+                ->route('settings')
+                ->with('error', 'Respons koneksi ClickUp tidak valid.');
+        }
 
         session([
             'clickup_access_token' => $token,
