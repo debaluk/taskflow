@@ -45,6 +45,53 @@ class SpaceStructureAuthorizationTest extends TestCase
         ]);
     }
 
+    public function test_folder_slug_collisions_are_resolved_without_database_errors(): void
+    {
+        [$owner, $space, $workspace] = $this->createSpace();
+
+        $this->actingAs($owner)
+            ->post(route('folders.store', [$workspace, $space]), [
+                'name' => 'Folder Riset',
+            ])
+            ->assertRedirect();
+
+        $this->actingAs($owner)
+            ->post(route('folders.store', [$workspace, $space]), [
+                'name' => 'Folder Riset',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('folders', [
+            'space_id' => $space->id,
+            'slug' => 'folder-riset',
+        ]);
+
+        $this->assertDatabaseHas('folders', [
+            'space_id' => $space->id,
+            'slug' => 'folder-riset-2',
+        ]);
+
+        $folder = Folder::create([
+            'uuid' => (string) Str::uuid(),
+            'workspace_id' => $workspace->id,
+            'space_id' => $space->id,
+            'name' => 'Folder Lain',
+            'slug' => 'folder-lain',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($owner)
+            ->put(route('folders.update', [$workspace, $space, $folder]), [
+                'name' => 'Folder Riset',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('folders', [
+            'id' => $folder->id,
+            'slug' => 'folder-riset-3',
+        ]);
+    }
+
     public function test_member_cannot_update_toggle_or_delete_folder_and_list(): void
     {
         [$owner, $space, $workspace] = $this->createSpace();
