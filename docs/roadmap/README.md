@@ -375,6 +375,7 @@ Fase 1 dinyatakan selesai jika:
 **Tujuan:** menyiapkan TaskFlow untuk penggunaan tim yang lebih luas.
 
 - [ ] Penyempurnaan role/permission lanjutan di luar aturan Owner dan Member Space yang telah ditetapkan pada Fase 1.
+- [ ] **Role Administrator Sistem untuk direktori anggota global:** halaman/tabel `members` tetap menjadi direktori pencarian dan pembacaan anggota; operasi tambah/hapus anggota global hanya untuk Administrator Sistem. Owner Space hanya mengelola keanggotaan Space melalui `space_members`. Keanggotaan direktori global tidak memberikan akses Space atau hak assignment. Implementasi ditunda sampai Role Management tersedia; keputusan disetujui pada 8 November 2026.
 - [ ] Pengelolaan profil dan preferensi pengguna.
 - [ ] Audit trail untuk aktivitas penting.
 - [ ] Backup dan prosedur pemulihan.
