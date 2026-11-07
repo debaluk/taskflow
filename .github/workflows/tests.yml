@@ -33,5 +33,13 @@ jobs:
           printf 'APP_KEY=\n' > .env
           php artisan key:generate
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check JavaScript syntax
+        run: node --check public/js/task-manager.js
+
       - name: Run automated tests
         run: php artisan test
