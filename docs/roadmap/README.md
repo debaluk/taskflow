@@ -178,7 +178,7 @@ Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Dur
     - `ActivityController` sebelumnya menampilkan aktivitas seluruh Workspace ID 1 tanpa filter Space. Query feed sekarang dibatasi ke Task pada Space yang dapat diakses user; pengujian lintas-Space ditambahkan pada `ActivityVisibilityTest`.
     - Detail Task mengirim permission flags ke UI. Modal menampilkan kontrol sesuai hak: Owner/pembuat mengelola detail; assignee-only mengubah status dan mengirim note; member biasa hanya melihat detail serta note yang tersedia.
   - **Pengujian otorisasi dan Activity:** `TaskAuthorizationTest` mencakup pembuatan Task oleh Member, izin status dan note assignee-only, penolakan edit/hapus/assignment/Subtask/Dependency/Reorder untuk assignee-only, hak pembuat dan Owner, penolakan user luar Space, serta batas Assignment ke anggota Space. `ActivityVisibilityTest` memastikan feed tidak membocorkan aktivitas Task dari Space lain. `SpaceMemberManagementTest` memastikan Owner tidak dapat mengeluarkan dirinya sendiri dari membership. GitHub Actions run `42405067475` berstatus **success**: **23 test passed (86 assertions)**.
-  - **Status F1-02: Done pada source code dan CI (8 November 2026).** Seluruh matriks role Space/Task yang disepakati telah diterapkan dan diuji otomatis. Migration belum dijalankan pada VPS produksi; deployment menunggu keputusan/permintaan terpisah. Tidak ada perubahan konfigurasi VPS.
+  - **Status F1-02: Done pada source code, CI, dan migration produksi (8 November 2026).** Seluruh matriks role Space/Task yang disepakati telah diterapkan dan diuji otomatis. Migration F1-02 telah dijalankan pada VPS produksi dan diverifikasi melalui `php artisan migrate:status`; Owner Space yang ada telah dimasukkan ke `space_members`. Tidak ada perubahan konfigurasi server.
   
 - [x] **F1-03 — Rapikan definisi route**
   - Audit memastikan dua definisi GET `/tasks/{task}` menuju controller/method yang sama, memakai middleware `auth` yang sama, dan memiliki nama route identik. Satu definisi duplikat dihapus; definisi tersisa tetap diletakkan setelah route Task statis.
@@ -275,7 +275,7 @@ Aturan tambahan:
   - **Temuan dan koreksi OAuth ClickUp (8 November 2026):** request token telah memiliki connect timeout 5 detik dan timeout total 10 detik, tetapi kegagalan koneksi (`ConnectionException`) belum ditangani. Kondisi ini dapat menghasilkan HTTP 500. `SettingsController::clickupCallback()` kini menangkap exception tersebut, mencatat log tanpa menyimpan detail sensitif, dan mengembalikan pesan kegagalan yang aman ke halaman Settings.
   - **Regression test:** `ClickUpOAuthValidationTest::test_callback_handles_provider_connection_failure_without_server_error()` memaksa koneksi provider gagal dan memastikan callback tetap redirect ke Settings, menampilkan pesan yang sesuai, serta tidak menyimpan access token atau status connected.
   - **Commit koreksi:** `0a585ef` (penanganan kegagalan koneksi), `4c767b1` (regression test awal), dan `28dea81` (koreksi namespace exception pada test). Percobaan CI pada `4c767b1` gagal karena kesalahan penulisan namespace di test; diperbaiki pada `28dea81`. GitHub Actions run `42413163358` berstatus **success** dengan **61 test passed (274 assertions)**, termasuk pemeriksaan sintaks JavaScript `node --check public/js/task-manager.js`.
-  - **Batas audit berikutnya:** lanjutkan pemeriksaan validasi/response pada endpoint Task, Subtask, Dependency, Space, Folder, List, Settings/ClickUp OAuth, dan autentikasi; verifikasi batas panjang/format field terhadap kebutuhan serta tipe kolom database; cek konsistensi respons validasi untuk request browser dan JSON. Jangan menandai F1-05 Done sebelum seluruh temuan ditutup dan CI akhir sukses.
+  - **Penutupan audit:** seluruh endpoint yang disebut pada ruang lingkup F1-05 telah diperiksa; temuan konkret ditutup dengan regression test. Tidak ada item audit validasi terbuka yang menahan F1-05.
 
 
   - **Temuan keamanan data pada layout:** layout utama sebelumnya mengambil seluruh record users dan mengirim nama serta email semua pengguna ke JavaScript global window.systemUsers pada setiap halaman authenticated. Data pengguna yang tidak memiliki hubungan ke Space yang dapat diakses ikut terekspos di HTML. Query global dan kedua ekspor JavaScript tersebut dihapus; direktori global tetap tersedia melalui halaman Anggota sesuai keputusan produk, sedangkan otorisasi assignment tetap ditegakkan backend melalui space_members.
@@ -285,7 +285,7 @@ Aturan tambahan:
   - **Keputusan desain direktori anggota (8 November 2026):** halaman dan tabel `members` global tetap dipertahankan sebagai direktori untuk memudahkan pencarian anggota. Relasi tersebut tidak menjadi sumber otorisasi atau penugasan Task. `space_members` tetap menjadi satu-satunya sumber keanggotaan Space; pengguna harus menjadi anggota Space terkait sebelum dapat ditugaskan pada Task di dalamnya. Tidak ada perubahan kode pada halaman Anggota global.
   - **Temuan audit lanjutan — akses Space nonaktif:** `TaskManagerController` dan halaman List Task sudah memeriksa status aktif Space, tetapi `FolderController::authorizeSpaceView()` dan `TaskListController::authorizeSpace()` sebelumnya hanya memeriksa workspace dan membership. Akibatnya, Owner/Member masih dapat membuka endpoint Folder/List pada Space yang sudah dinonaktifkan. Koreksi minimum menambahkan pemeriksaan `is_active` pada kedua otorisasi tersebut.
   - **Pengujian regresi ditambahkan:** `SpaceVisibilityTest::test_inactive_space_blocks_folder_and_task_list_access()` memastikan Space nonaktif menolak pembacaan dan pembuatan Folder/List serta tidak menyimpan data baru.
-  - **Commit koreksi:** `5013aa0` (Folder), `2e6bd3e` (Task List), dan `d385356` (feature test). Hasil CI untuk perubahan ini menunggu verifikasi; status F1-05 tetap **In Progress**.
+  - **Commit koreksi:** `5013aa0` (Folder), `2e6bd3e` (Task List), dan `d385356` (feature test). Perubahan ini telah tercakup pada CI run `42414568390` yang sukses dengan **64 test passed (285 assertions)**.
 
   - **Temuan dan koreksi penghapusan Task induk (8 November 2026):** sebelumnya penghapusan Task induk hanya melakukan soft-delete pada record induk, sehingga Subtask aktif tetap tersimpan tanpa induk aktif. Penghapusan kini menjalankan soft-delete secara rekursif terhadap seluruh keturunan Subtask (termasuk level bertingkat) dalam satu transaksi database. Subtask yang sebelumnya sudah soft-deleted tetap ditelusuri agar keturunan aktifnya tidak tertinggal.
   - **Regression test:** `TaskAuthorizationTest::test_deleting_parent_task_soft_deletes_all_nested_subtasks()` memastikan Task induk, Subtask, dan Subtask bertingkat seluruhnya ter-soft-delete saat induk dihapus.
@@ -328,14 +328,14 @@ Aturan tambahan:
 
 Fase 1 dinyatakan selesai jika:
 
-- [ ] Tidak ada akses lintas Workspace yang tidak sah pada skenario pengujian.
-- [ ] Otorisasi backend teruji untuk objek dan operasi utama.
-- [ ] Definisi route duplikat/konflik yang tidak disengaja telah dibereskan.
-- [ ] Alur Task, Subtask, Assignment, dan Dependency memiliki pengujian otomatis.
-- [ ] Integritas relasi dan perilaku penghapusan telah diverifikasi.
-- [ ] Dokumentasi sesuai dengan implementasi aktual.
-- [ ] Tidak ada regresi pada alur kerja inti.
-- [ ] Hasil test dan catatan perubahan tersedia sebelum fase berikutnya dimulai.
+- [x] Tidak ada akses lintas Workspace yang tidak sah pada skenario pengujian.
+- [x] Otorisasi backend teruji untuk objek dan operasi utama.
+- [x] Definisi route duplikat/konflik yang tidak disengaja telah dibereskan.
+- [x] Alur Task, Subtask, Assignment, dan Dependency memiliki pengujian otomatis.
+- [x] Integritas relasi dan perilaku penghapusan telah diverifikasi.
+- [x] Dokumentasi sesuai dengan implementasi aktual.
+- [x] Tidak ada regresi pada alur kerja inti berdasarkan CI.
+- [x] Hasil test dan catatan perubahan tersedia sebelum fase berikutnya dimulai.
 
 ---
 
