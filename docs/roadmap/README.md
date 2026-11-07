@@ -150,7 +150,15 @@ Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Dur
     - Reorder memvalidasi Task berada pada context Workspace/Space/List yang dikirim, tetapi belum memeriksa hak Owner/pembuat. Operasi ini harus mengikuti hak edit Task dan tidak boleh menjadi jalur perubahan status bagi assignee-only di luar aturan.
   - **Implikasi dan urutan implementasi yang perlu dipertahankan:** mulai dari fondasi Owner dan relasi Space, lanjut pivot `space_members`, manajemen anggota Space, helper/policy otorisasi Task, lalu pengamanan Folder/List, Task, Subtask, Dependency, Assignment, dan Reorder. Tambahkan feature test untuk setiap kombinasi Owner, Member pembuat, Member assignee-only, serta user tanpa akses.
   - **Catatan data:** sesuai keputusan sebelumnya, belum ada data Space lama yang perlu di-backfill. Space baru harus menyimpan Owner pembuatnya dan relasi anggota awal dimulai kosong; Workspace tetap ID 1.
-  - **Belum dilakukan:** belum ada migration baru, perubahan model/controller, penghapusan data, atau perubahan konfigurasi VPS. Temuan ini berasal dari audit source GitHub, bukan verifikasi database produksi.
+  - **Implementasi fondasi Owner dan membership (8 November 2026):**
+    - Menambahkan `owner_id` ke `Space::$fillable`, sehingga Owner yang dikirim `SpaceController::store()` sekarang dapat tersimpan melalui mass assignment.
+    - Menambahkan relasi `Space::owner()`, `Space::members()`, dan `Space::memberships()`.
+    - Menambahkan relasi `User::ownedSpaces()`, `User::spaces()`, dan `User::spaceMemberships()`.
+    - Menambahkan model `SpaceMember` dengan relasi Space, User, dan inviter.
+    - Menambahkan migration `2026_11_08_000001_create_space_members_table` dengan foreign key ke Space/User, unique pair `space_id + user_id`, serta `invited_by` nullable. Tabel `members` global tidak diubah.
+    - Menambahkan migration `2026_11_08_000002_add_owner_foreign_key_to_spaces_table`; penghapusan User pemilik Space dibatasi oleh foreign key `RESTRICT` agar Space tidak kehilangan Owner tanpa sengaja.
+    - Menambahkan `SpaceMembershipFoundationTest` untuk mass assignment Owner, relasi Owner, keanggotaan, dan inviter.
+  - **Belum dilakukan:** migration belum dijalankan pada VPS produksi; belum ada pengelolaan anggota melalui UI/controller dan belum ada enforcement otorisasi berbasis membership. Tidak ada perubahan konfigurasi VPS. Menunggu hasil GitHub Actions sebelum melanjutkan tahap berikutnya.
   
 - [ ] **F1-03 — Rapikan definisi route**
   - Verifikasi route detail Task yang terduplikasi.
