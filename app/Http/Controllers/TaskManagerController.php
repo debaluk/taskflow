@@ -1171,6 +1171,46 @@ class TaskManagerController extends Controller
         ]);
     }
 
+    /**
+     * Soft-delete Task dan seluruh keturunan Subtask secara rekursif.
+     */
+    private function softDeleteTaskTree(Task $task): void
+    {
+        $frontier = collect([(int) $task->id]);
+        $descendantIds = collect([(int) $task->id]);
+
+        while ($frontier->isNotEmpty()) {
+            $children = Task::withTrashed()
+                ->whereIn('parent_id', $frontier)
+                ->whereNotIn('id', $descendantIds)
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id);
+
+            if ($children->isEmpty()) {
+                break;
+            }
+
+            $descendantIds = $descendantIds->merge($children);
+            $frontier = $children;
+        }
+
+        $idsToDelete = $descendantIds->reject(
+            fn ($id) => (int) $id === (int) $task->id
+        );
+
+        Task::withTrashed()
+            ->whereIn('id', $idsToDelete)
+            ->whereNull('deleted_at')
+            ->update([
+                'deleted_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+        if (! $task->trashed()) {
+            $task->delete();
+        }
+    }
+
     // =========================================================
     // DELETE TASK
     // =========================================================
@@ -1187,32 +1227,7 @@ class TaskManagerController extends Controller
 
 
         DB::transaction(function () use ($task) {
-            $frontier = collect([$task->id]);
-            $descendantIds = collect([$task->id]);
-
-            while ($frontier->isNotEmpty()) {
-                $children = Task::withTrashed()
-                    ->whereIn('parent_id', $frontier)
-                    ->whereNotIn('id', $descendantIds)
-                    ->pluck('id');
-
-                if ($children->isEmpty()) {
-                    break;
-                }
-
-                $descendantIds = $descendantIds->merge($children);
-                $frontier = $children;
-            }
-
-            Task::withTrashed()
-                ->whereIn('id', $descendantIds->reject(fn ($id) => $id === $task->id))
-                ->whereNull('deleted_at')
-                ->update([
-                    'deleted_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-            $task->delete();
+            $this->softDeleteTaskTree($task);
         });
 
         $returnUrl = $this->safeReturnUrl(
@@ -1388,11 +1403,13 @@ class TaskManagerController extends Controller
 
         $parent = $task->parent;
 
-        $task->delete();
+        DB::transaction(function () use ($task, $parent) {
+            $this->softDeleteTaskTree($task);
 
-        if ($parent) {
-            $this->updateParentProgress($parent);
-        }
+            if ($parent) {
+                $this->updateParentProgress($parent);
+            }
+        });
 
         return response()->json([
             'success' => true,

@@ -57,6 +57,29 @@ class TaskWorkflowTest extends TestCase
         $this->assertSoftDeleted('tasks', ['id' => $subtask->id]);
     }
 
+    public function test_deleting_subtask_soft_deletes_all_nested_subtasks_and_keeps_parent(): void
+    {
+        [$owner, $space, $list, $creator] = $this->createSpaceWithMember();
+        $parent = $this->createTask($space, $list, $creator, 'Task induk');
+
+        $subtask = $this->createTask($space, $list, $creator, 'Subtask yang dihapus');
+        $subtask->update(['parent_id' => $parent->id]);
+
+        $nestedSubtask = $this->createTask($space, $list, $creator, 'Subtask bertingkat');
+        $nestedSubtask->update(['parent_id' => $subtask->id]);
+
+        $this->actingAs($creator)
+            ->deleteJson(route('tasks.subtasks.destroy', $subtask))
+            ->assertOk();
+
+        $this->assertDatabaseHas('tasks', [
+            'id' => $parent->id,
+            'deleted_at' => null,
+        ]);
+        $this->assertSoftDeleted('tasks', ['id' => $subtask->id]);
+        $this->assertSoftDeleted('tasks', ['id' => $nestedSubtask->id]);
+    }
+
     public function test_task_creator_can_create_update_and_delete_dependency(): void
     {
         [$owner, $space, $list, $creator] = $this->createSpaceWithMember();

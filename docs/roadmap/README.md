@@ -282,7 +282,9 @@ Aturan tambahan:
 
   - **Temuan dan koreksi penghapusan Task induk (8 November 2026):** sebelumnya penghapusan Task induk hanya melakukan soft-delete pada record induk, sehingga Subtask aktif tetap tersimpan tanpa induk aktif. Penghapusan kini menjalankan soft-delete secara rekursif terhadap seluruh keturunan Subtask (termasuk level bertingkat) dalam satu transaksi database. Subtask yang sebelumnya sudah soft-deleted tetap ditelusuri agar keturunan aktifnya tidak tertinggal.
   - **Regression test:** `TaskAuthorizationTest::test_deleting_parent_task_soft_deletes_all_nested_subtasks()` memastikan Task induk, Subtask, dan Subtask bertingkat seluruhnya ter-soft-delete saat induk dihapus.
-  - **Status:** implementasi dan test ditambahkan; menunggu verifikasi CI. F1-05 tetap **In Progress**.
+  - **Temuan lanjutan:** endpoint penghapusan Subtask secara langsung sebelumnya hanya melakukan soft-delete pada satu record, sehingga Subtask bertingkat di bawahnya dapat tertinggal. Perilaku kini diseragamkan melalui helper `softDeleteTaskTree()` yang menelusuri seluruh keturunan, termasuk record yang sudah soft-deleted, lalu melakukan soft-delete dalam satu transaksi. Penghapusan Subtask tetap mempertahankan Task induknya dan menghitung ulang progres induk hanya jika masih ada Subtask aktif; jika sudah tidak ada, progres induk dipertahankan sesuai keputusan produk.
+  - **Regression test:** `TaskWorkflowTest::test_deleting_subtask_soft_deletes_all_nested_subtasks_and_keeps_parent()` memastikan penghapusan Subtask bertingkat tidak menghapus induk dan tidak meninggalkan keturunan aktif.
+  - **Status:** koreksi dan test ditambahkan; menunggu verifikasi CI. F1-05 tetap **In Progress**.
 
 - [ ] **F1-06 — Audit relasi dan integritas data**
   - Periksa relasi parent–subtask, assignee, dependency, dan struktur Workspace.
