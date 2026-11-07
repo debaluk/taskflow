@@ -82,14 +82,14 @@ Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Dur
 
 ### P0 — Wajib diselesaikan
 
-- [ ] **F1-01 — Audit konteks Workspace aktif**
+- [x] **F1-01 — Audit konteks Workspace aktif**
   - Telusuri seluruh alur pemilihan Workspace dan relasi user–Workspace.
   - Pastikan query Task, Space, Folder, List, dan anggota selalu dibatasi pada Workspace yang memang boleh diakses.
   - Pertahankan Workspace ID `1` sebagai wadah internal; jangan membangun mekanisme multi-Workspace atau mengganti scope ini tanpa keputusan baru.
-  - Pastikan seluruh akses data kerja ditentukan melalui keanggotaan dan kepemilikan Space.
-  - Kriteria penerimaan: Workspace tetap menggunakan ID `1`, sementara pengguna hanya dapat mengakses Space yang dimiliki atau dibagikan kepadanya.
+  - Pastikan Workspace tidak lagi ditawarkan sebagai konteks kerja yang dapat dipilih/dikelola pengguna. Penegakan akses data berdasarkan keanggotaan dan kepemilikan Space dilaksanakan pada F1-02.
+  - Kriteria penerimaan: Workspace tetap menggunakan ID `1` sebagai wadah internal dan route manajemen/pemilihan Workspace legacy tidak tersedia; otorisasi Space dilanjutkan dan diuji pada F1-02.
 
-  - **Status audit: Testing.** Audit source dan koreksi minimum F1-01 telah dilakukan. Pemenuhan akses per Space tetap menjadi ruang lingkup implementasi otorisasi F1-02.
+  - **Status audit: Done (8 November 2026).** Audit source dan koreksi minimum F1-01 telah dilakukan serta diverifikasi melalui GitHub Actions. Penegakan akses per Space tetap menjadi ruang lingkup implementasi dan pengujian F1-02.
   - **Temuan audit (8 November 2026):**
     - `TaskManagerController::currentWorkspace()` mengunci Workspace ID `1` dan mengatur session ke ID yang sama. Perilaku ini sesuai keputusan arsitektur dan harus dipertahankan.
     - `TaskManagerController::accessibleWorkspaceIds()` mengambil ID dari `workspace_members`, tetapi alur utama Task tidak menggunakan hasil tersebut sebagai scope.
@@ -115,7 +115,9 @@ Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Dur
   - **Otomasi pengujian CI (8 November 2026):** workflow `.github/workflows/tests.yml` ditambahkan menggunakan GitHub Actions. Workflow berjalan pada push ke `main`, Pull Request menuju `main`, dan dapat dijalankan manual (`workflow_dispatch`). Runner menggunakan PHP 8.3, ekstensi SQLite, memasang dependency Composer termasuk `require-dev`, menyiapkan `.env`, lalu menjalankan `php artisan test`. Pengujian tidak dijalankan di VPS produksi dan tidak memerlukan perubahan dependency server.
   - **Koreksi CI (8 November 2026):** eksekusi pertama berhasil memasang dependency, tetapi berhenti pada persiapan environment karena repository tidak menyediakan `.env.example`. Workflow diperbaiki untuk membuat `.env` dengan variabel `APP_KEY` kosong sebelum menjalankan `php artisan key:generate`. Eksekusi berikutnya berhasil melewati persiapan environment setelah `APP_KEY=` ditulis eksplisit, lalu test suite menemukan kegagalan pada test bawaan `ExampleTest`: test mengharapkan HTTP 200 untuk `/`, padahal route dashboard memang dilindungi middleware `auth` dan guest diarahkan (HTTP 302). Test diperbaiki agar memverifikasi redirect guest sesuai perilaku aplikasi. Pengujian ulang dipicu oleh commit perbaikan tersebut.
   - **Commit terkait:** `6719a0a` (workflow awal), `9463362` (koreksi persiapan environment awal), `5c9aa34` (inisialisasi variabel APP_KEY), `f156698` (selaraskan test dashboard dengan middleware auth), `419790c` dan `dac5087` (pencatatan workflow/koreksi pada roadmap).
-  - **Status:** Testing — workflow CI sudah diperbaiki; menunggu hasil eksekusi ulang setelah koreksi test dashboard. F1-01 belum dinyatakan Done.
+  - **Hasil pengujian otomatis:** GitHub Actions run `42402205140` berstatus **success**; `php artisan test` menghasilkan **4 passed (15 assertions)**, termasuk dua pengujian `WorkspaceContextTest` untuk memastikan route Workspace legacy tidak terdaftar dan route Folder tetap tersedia.
+  - **Commit teruji:** `f156698` (test suite hijau setelah koreksi test dashboard). Workflow dan roadmap juga telah dikoreksi/diperbarui pada commit setelahnya.
+  - **Status:** Done — ruang lingkup F1-01 selesai dan lulus pengujian otomatis. Pembatasan akses berdasarkan Space tetap dikerjakan pada F1-02; tidak termasuk penutupan F1-01.
 
 - [ ] **F1-02 — Audit otorisasi objek**
   - Terapkan otorisasi berbasis Space untuk Task, Subtask, Folder, List, anggota, dan Dependency.
