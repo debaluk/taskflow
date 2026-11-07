@@ -70,7 +70,16 @@ class SpaceMemberController extends Controller
             404
         );
 
-        $space->members()->detach($user->id);
+        DB::transaction(function () use ($space, $user) {
+            DB::table('task_assignees')
+                ->where('user_id', $user->id)
+                ->whereIn('task_id', Task::query()
+                    ->where('space_id', $space->id)
+                    ->select('id'))
+                ->delete();
+
+            $space->members()->detach($user->id);
+        });
 
         return back()->with('success', 'Anggota berhasil dikeluarkan dari Space.');
     }
