@@ -1443,7 +1443,7 @@
 
 
         {{-- SUBTASKS --}}
-        <div class="task-subtasks">
+        <div class="task-subtasks" id="taskSubtasksSection">
 
             <div class="subtask-head">
 
@@ -1469,6 +1469,7 @@
                 <button
                     type="button"
                     class="btn ghost"
+                    id="addSubtaskButton"
                     onclick="showAddSubtaskForm()"
                 >
                     ＋ Add Subtask
@@ -1616,12 +1617,33 @@
         </div>
 
 
+        {{-- TASK NOTES --}}
+        <section id="taskNoteSection" class="hidden" style="margin:20px 0;padding:18px;border:1px solid #e6e8ec;border-radius:12px;">
+            <div style="margin-bottom:12px;">
+                <span class="eyebrow">NOTES</span>
+                <h3 style="margin:4px 0 0;">Catatan Task</h3>
+            </div>
+
+            <div id="taskNoteList" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;">
+                <div style="color:#8a9099;">Belum ada catatan.</div>
+            </div>
+
+            <div id="taskNoteForm">
+                <label for="taskNoteInput" style="display:block;margin-bottom:6px;">Tambah note</label>
+                <textarea id="taskNoteInput" rows="3" maxlength="5000" placeholder="Tulis perkembangan atau catatan pekerjaan..." style="width:100%;"></textarea>
+                <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+                    <button type="button" class="btn primary" onclick="saveTaskNote()">Kirim note</button>
+                </div>
+            </div>
+        </section>
+
         {{-- TASK MODAL FOOTER --}}
         <div class="modal-foot">
 
             <button
                 type="button"
                 class="btn ghost"
+                id="deleteTaskButton"
                 onclick="deleteTask()"
             >
                 Delete
