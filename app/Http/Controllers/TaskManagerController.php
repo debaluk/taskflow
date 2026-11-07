@@ -398,7 +398,8 @@ class TaskManagerController extends Controller
             ->whereHas('space', function ($query) use ($workspace) {
                 $query
                     ->where('workspace_id', $workspace->id)
-                    ->where('is_active', true);
+                    ->where('is_active', true)
+                    ->accessibleTo((int) auth()->id());
             })
             ->with([
                 'space',
@@ -694,7 +695,8 @@ class TaskManagerController extends Controller
             ->whereHas('space', function ($query) use ($workspace) {
                 $query
                     ->where('workspace_id', $workspace->id)
-                    ->where('is_active', true);
+                    ->where('is_active', true)
+                    ->accessibleTo((int) auth()->id());
             })
             ->first();
 
