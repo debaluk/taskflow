@@ -71,13 +71,13 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($members as $member)
+                @forelse($members as $membership)
                     <tr>
-                        <td style="padding:12px 16px;">{{ $member->name }}</td>
-                        <td style="padding:12px 16px;">{{ $member->email }}</td>
+                        <td style="padding:12px 16px;">{{ $membership->user->name }}</td>
+                        <td style="padding:12px 16px;">{{ $membership->user->email }}</td>
                         <td style="padding:12px 16px;">{{ $member->pivot->invited_by ? \App\Models\User::find($member->pivot->invited_by)?->name : '—' }}</td>
                         <td style="padding:12px 16px;text-align:right;">
-                            <form method="POST" action="{{ route('spaces.members.destroy', [$space, $member]) }}" onsubmit="return confirm('Keluarkan {{ addslashes($member->name) }} dari Space ini?')">
+                            <form method="POST" action="{{ route('spaces.members.destroy', [$space, $membership->user]) }}" onsubmit="return confirm('Keluarkan {{ addslashes($membership->user->name) }} dari Space ini?')">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn" style="background:#fee2e2;color:#b91c1c;">Keluarkan</button>
