@@ -280,7 +280,7 @@ Aturan tambahan:
 
   - **Temuan keamanan data pada layout:** layout utama sebelumnya mengambil seluruh record users dan mengirim nama serta email semua pengguna ke JavaScript global window.systemUsers pada setiap halaman authenticated. Data pengguna yang tidak memiliki hubungan ke Space yang dapat diakses ikut terekspos di HTML. Query global dan kedua ekspor JavaScript tersebut dihapus; direktori global tetap tersedia melalui halaman Anggota sesuai keputusan produk, sedangkan otorisasi assignment tetap ditegakkan backend melalui space_members.
   - **Regression test:** SpaceVisibilityTest::test_layout_does_not_expose_unrelated_registered_user_details() memastikan nama/email pengguna di luar Space tidak muncul pada halaman authenticated.
-  - **Status:** koreksi dan test ditambahkan; menunggu CI.
+  - **Status:** koreksi dan test lulus CI run `42414568390` (**64 test passed, 285 assertions**).
 
   - **Keputusan desain direktori anggota (8 November 2026):** halaman dan tabel `members` global tetap dipertahankan sebagai direktori untuk memudahkan pencarian anggota. Relasi tersebut tidak menjadi sumber otorisasi atau penugasan Task. `space_members` tetap menjadi satu-satunya sumber keanggotaan Space; pengguna harus menjadi anggota Space terkait sebelum dapat ditugaskan pada Task di dalamnya. Tidak ada perubahan kode pada halaman Anggota global.
   - **Temuan audit lanjutan — akses Space nonaktif:** `TaskManagerController` dan halaman List Task sudah memeriksa status aktif Space, tetapi `FolderController::authorizeSpaceView()` dan `TaskListController::authorizeSpace()` sebelumnya hanya memeriksa workspace dan membership. Akibatnya, Owner/Member masih dapat membuka endpoint Folder/List pada Space yang sudah dinonaktifkan. Koreksi minimum menambahkan pemeriksaan `is_active` pada kedua otorisasi tersebut.
@@ -291,7 +291,7 @@ Aturan tambahan:
   - **Regression test:** `TaskAuthorizationTest::test_deleting_parent_task_soft_deletes_all_nested_subtasks()` memastikan Task induk, Subtask, dan Subtask bertingkat seluruhnya ter-soft-delete saat induk dihapus.
   - **Temuan lanjutan:** endpoint penghapusan Subtask secara langsung sebelumnya hanya melakukan soft-delete pada satu record, sehingga Subtask bertingkat di bawahnya dapat tertinggal. Perilaku kini diseragamkan melalui helper `softDeleteTaskTree()` yang menelusuri seluruh keturunan, termasuk record yang sudah soft-deleted, lalu melakukan soft-delete dalam satu transaksi. Penghapusan Subtask tetap mempertahankan Task induknya dan menghitung ulang progres induk hanya jika masih ada Subtask aktif; jika sudah tidak ada, progres induk dipertahankan sesuai keputusan produk.
   - **Regression test:** `TaskWorkflowTest::test_deleting_subtask_soft_deletes_all_nested_subtasks_and_keeps_parent()` memastikan penghapusan Subtask bertingkat tidak menghapus induk dan tidak meninggalkan keturunan aktif.
-  - **Status:** koreksi dan test ditambahkan; menunggu verifikasi CI. F1-05 tetap **In Progress**.
+  - **Status:** koreksi dan test lulus CI run `42414221412` (**63 test passed, 282 assertions**). F1-05 tetap **Done**.
 
 - [x] **F1-06 — Audit relasi dan integritas data**
   - Periksa relasi parent–subtask, assignee, dependency, dan struktur Workspace.
