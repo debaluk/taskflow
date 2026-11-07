@@ -174,21 +174,13 @@ Space mempunyai:
 
 ## 7. Folder
 
-Folder adalah container optional.
+Folder adalah container opsional di dalam Space. Folder belum menjadi bagian wajib dari alur kerja harian.
 
-    Space
-    └── Folder
-        ├── List
-        └── List
-
-Folder tetap didukung database tetapi tidak menjadi node utama sidebar.
-
-UI saat ini disederhanakan menjadi:
-
-    Space
-    └── List
-
----
+Aturan saat ini:
+- List dapat berada langsung di Space atau di dalam Folder.
+- Folder dan List harus berasal dari Space yang sama.
+- Mengubah status aktif Folder tidak otomatis menonaktifkan List di dalamnya; semantik tersebut ditunda sampai Folder benar-benar digunakan dalam operasional.
+- Folder tidak dapat dihapus selama masih memiliki Subfolder, List, atau Task aktif.
 
 ## 8. List
 
@@ -241,26 +233,14 @@ Tabel utama:
 
 ## 10. Subtask
 
-Subtask tetap menggunakan tabel tasks.
-
-Relasi:
-
-    tasks.parent_id
-
-Contoh:
-
-    Task
-    ├── Subtask 1
-    ├── Subtask 2
-    └── Subtask 3
-
-Tidak dibuat tabel subtasks terpisah.
+Subtask tetap menggunakan tabel tasks dengan relasi parent_id dan dapat memiliki Subtask bertingkat.
 
 Aturan:
-
-> Subtask tidak otomatis mengubah due date parent.
-
----
+- Subtask tidak otomatis mengubah due date parent.
+- Progres parent dihitung dari Subtask aktif selama masih ada.
+- Jika seluruh Subtask aktif dihapus, progres parent dipertahankan; tidak otomatis dikembalikan ke nol.
+- Menghapus Task atau Subtask melakukan soft-delete terhadap seluruh keturunan Subtask secara rekursif dalam satu transaksi.
+- Menghapus Subtask tidak menghapus parent di atasnya.
 
 ## 11. Ownership
 
@@ -628,49 +608,11 @@ Dashboard berfungsi sebagai overview pekerjaan.
 
 ## 26. Agenda
 
-Agenda menampilkan pekerjaan berdasarkan waktu.
-
-Contoh:
-
-    Hari Ini
-    Besok
-    Minggu Ini
-
-Agenda berfokus pada:
-
-- due date;
-- pekerjaan mendatang;
-- pekerjaan yang perlu diperhatikan.
-
----
+Agenda direncanakan menampilkan pekerjaan berdasarkan due date, tetapi controller saat ini masih mengirim collection kosong dan nilai hitung nol. Halaman/route tersedia sebagai placeholder, bukan fitur operasional.
 
 ## 27. Inbox
 
-Inbox berisi item yang membutuhkan perhatian user.
-
-Contoh:
-
-- Assignment;
-- Mention;
-- Comment;
-- Task Update;
-- Due Reminder;
-- Collaboration Activity;
-- System Activity.
-
-Inbox bukan daftar seluruh Task.
-
-Konsep:
-
-    Event
-      |
-      v
-    User Attention
-      |
-      v
-    Inbox
-
----
+Inbox direncanakan untuk item yang membutuhkan perhatian user. Controller saat ini mengirim collection kosong dan unreadCount nol. Halaman/route tersedia sebagai placeholder, belum menjadi sistem notifikasi operasional.
 
 ## 28. Favorites
 
@@ -688,37 +630,9 @@ Jangan implement atau tampilkan kembali Favorites sampai ada instruksi eksplisit
 
 ## 29. Activity
 
-Activity digunakan untuk mencatat aktivitas sistem.
+Activity Feed saat ini menampilkan aktivitas Task pada Space yang dapat diakses pengguna. Implementasi yang tersedia mencatat pembuatan Task dan note Task; belum semua perubahan Task, assignment, status, atau perubahan keanggotaan menghasilkan event audit otomatis.
 
-Contoh:
-
-- Task Created;
-- Task Updated;
-- Task Assigned;
-- Status Changed;
-- Due Date Changed;
-- Member Added;
-- Member Removed.
-
-Flow:
-
-    Action
-      |
-      v
-    Event
-      |
-      v
-    Activity
-
-Activity dapat digunakan untuk:
-
-- Activity feed;
-- Dashboard;
-- Task history;
-- Inbox;
-- audit trail.
-
----
+Activity belum dapat dianggap sebagai audit trail lengkap.
 
 ## 30. Database Architecture
 
@@ -940,55 +854,13 @@ Jangan menggunakan JavaScript sebagai pengganti authorization backend.
 
 ## 38. ClickUp Integration
 
-TaskFlow dirancang untuk mendukung one-way import dari ClickUp.
+Integrasi ClickUp saat ini menyediakan alur OAuth connect/callback dasar. Access token hasil callback disimpan pada session, belum menjadi koneksi persisten per pengguna.
 
-Flow:
-
-    Settings
-      |
-      └── ClickUp
-            |
-            v
-        Connect ClickUp
-            |
-            v
-           Import
-            |
-            v
-        TaskFlow
-
-Direction:
-
-    ClickUp
-       |
-       v
-    TaskFlow
-
-Bukan synchronization dua arah.
-
----
+Import end-to-end belum siap dan tidak boleh digunakan untuk migrasi data produksi. Pengembangan import yang aman menjadi backlog Fase 5.
 
 ## 39. ClickUp Mapping
 
-Field:
-
-    members.clickup_user_id
-
-dipersiapkan untuk mapping user.
-
-Konsep:
-
-    ClickUp User
-         |
-         v
-    clickup_user_id
-         |
-         v
-    TaskFlow Member
-
-Import tidak boleh membuat TaskFlow menjadi hardcoded ClickUp clone.
-
----
+Field members.clickup_user_id disiapkan untuk mapping identitas direktori global dengan user ClickUp. Mapping ini tidak memberikan keanggotaan Space atau hak assignment; otorisasi tetap memakai space_members.
 
 ## 40. Import Data
 
