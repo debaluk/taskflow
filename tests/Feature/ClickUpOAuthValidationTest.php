@@ -80,7 +80,7 @@ class ClickUpOAuthValidationTest extends TestCase
         ]);
 
         Http::fake(function () {
-            throw new \\Illuminate\\Http\\Client\\ConnectionException('Connection failed.');
+            throw new \Illuminate\Http\Client\ConnectionException('Connection failed.');
         });
 
         $this->actingAs($user)
