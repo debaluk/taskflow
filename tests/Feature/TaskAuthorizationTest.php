@@ -114,6 +114,19 @@ class TaskAuthorizationTest extends TestCase
             ->assertForbidden();
 
         $this->actingAs($assignee)
+            ->patchJson(route('tasks.reorder'), [
+                'space_id' => $space->id,
+                'list_id' => $list->id,
+                'columns' => [
+                    [
+                        'status' => 'done',
+                        'tasks' => [$task->id],
+                    ],
+                ],
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($assignee)
             ->postJson(route('tasks.dependency.store', $task), [
                 'depends_on_task_id' => $task->id + 1,
                 'dependency_type' => 'FS',
