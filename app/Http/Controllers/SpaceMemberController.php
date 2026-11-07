@@ -60,6 +60,12 @@ class SpaceMemberController extends Controller
         $this->authorizeOwner($space);
 
         abort_unless(
+            (int) $user->id !== (int) $space->owner_id,
+            403,
+            'Owner Space tidak dapat dikeluarkan dari keanggotaan.'
+        );
+
+        abort_unless(
             $space->members()->whereKey($user->id)->exists(),
             404
         );
