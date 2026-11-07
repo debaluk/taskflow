@@ -1676,6 +1676,7 @@
                 <button
                     type="button"
                     class="btn primary"
+                    id="saveTaskButton"
                     onclick="saveTask()"
                 >
                     Save changes
