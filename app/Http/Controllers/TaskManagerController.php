@@ -6,6 +6,7 @@ use App\Events\TaskCreated;
 use App\Models\Space;
 use App\Models\Task;
 use App\Models\TaskDependency;
+use App\Models\Activity;
 use App\Models\TaskList;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
@@ -342,22 +343,60 @@ class TaskManagerController extends Controller
     /**
      * Pastikan task dapat diakses user.
      */
+    /**
+     * Memastikan user merupakan Owner atau anggota Space dari Task.
+     */
     private function authorizeTask(Task $task): void
-	{
-		abort_unless(
-			(int) $task->workspace_id === 1,
-			403,
-			'Anda tidak memiliki akses ke task ini.'
-		);
+    {
+        abort_unless((int) $task->workspace_id === 1, 403);
 
-		if (session()->has('workspace_id')) {
-			abort_unless(
-				(int) session('workspace_id') === 1,
-				403,
-				'Task bukan milik workspace aktif.'
-			);
-		}
-	}
+        if (session()->has('workspace_id')) {
+            abort_unless((int) session('workspace_id') === 1, 403);
+        }
+
+        abort_unless(
+            $task->space_id !== null &&
+            $task->space &&
+            $task->space->is_active &&
+            (int) $task->space->workspace_id === 1 &&
+            $task->space->isAccessibleBy((int) auth()->id()),
+            403,
+            'Anda bukan anggota Space dari Task ini.'
+        );
+    }
+
+    /**
+     * Pengelolaan detail Task hanya untuk Owner Space atau pembuat Task.
+     */
+    private function authorizeTaskManagement(Task $task): void
+    {
+        $this->authorizeTask($task);
+
+        abort_unless(
+            $task->space->isOwnedBy((int) auth()->id()) ||
+            (int) $task->created_by === (int) auth()->id(),
+            403,
+            'Hanya Owner Space atau pembuat Task yang dapat mengelola Task ini.'
+        );
+    }
+
+    /**
+     * Assignee boleh mengubah status, tanpa hak mengubah detail Task.
+     */
+    private function authorizeTaskStatus(Task $task): void
+    {
+        $this->authorizeTask($task);
+
+        $allowed = $task->space->isOwnedBy((int) auth()->id()) ||
+            (int) $task->created_by === (int) auth()->id() ||
+            $task->assignees()->whereKey(auth()->id())->exists();
+
+        abort_unless(
+            $allowed,
+            403,
+            'Anda bukan Owner, pembuat, atau assignee Task ini.'
+        );
+    }
 
     // =========================================================
     // LIST VIEW
@@ -800,7 +839,7 @@ class TaskManagerController extends Controller
         Request $request,
         Task $task
     ) {
-        $this->authorizeTask($task);
+        $this->authorizeTaskManagement($task);
 
         $data = $request->validate([
             'title' => [
@@ -870,7 +909,7 @@ class TaskManagerController extends Controller
         Request $request,
         Task $task
     ) {
-        $this->authorizeTask($task);
+        $this->authorizeTaskManagement($task);
 
         $data = $request->validate([
             'user_id' => [
@@ -883,14 +922,9 @@ class TaskManagerController extends Controller
         $userId = $data['user_id'] ?? null;
 
         if ($userId !== null) {
-            $isActiveMember = Workspace::query()
-                ->where('id', $task->workspace_id)
-                ->where('is_active', true)
-                ->whereHas('members', function ($query) use ($userId) {
-                    $query
-                        ->where('user_id', $userId)
-                        ->where('is_active', true);
-                })
+            $isActiveMember = $task->space
+                ->members()
+                ->whereKey($userId)
                 ->exists();
 
             abort_unless(
@@ -931,6 +965,49 @@ class TaskManagerController extends Controller
     }
 
     // =========================================================
+    // TASK NOTE
+    // =========================================================
+
+    public function storeNote(Request $request, Task $task)
+    {
+        $this->authorizeTask($task);
+
+        $isOwnerOrCreator = $task->space->isOwnedBy((int) auth()->id()) ||
+            (int) $task->created_by === (int) auth()->id();
+        $isAssignee = $task->assignees()
+            ->whereKey(auth()->id())
+            ->exists();
+
+        abort_unless(
+            $isOwnerOrCreator || $isAssignee,
+            403,
+            'Hanya Owner, pembuat, atau assignee Task yang dapat menambahkan note.'
+        );
+
+        $data = $request->validate([
+            'note' => ['required', 'string', 'max:5000'],
+        ]);
+
+        $activity = Activity::log(
+            (int) $task->workspace_id,
+            'task_note',
+            $data['note'],
+            $task
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Note berhasil ditambahkan.',
+            'note' => [
+                'id' => $activity->id,
+                'user_id' => $activity->user_id,
+                'description' => $activity->description,
+                'created_at' => $activity->created_at,
+            ],
+        ], 201);
+    }
+
+    // =========================================================
     // STATUS
     // =========================================================
 
@@ -938,7 +1015,7 @@ class TaskManagerController extends Controller
         Request $request,
         Task $task
     ) {
-        $this->authorizeTask($task);
+        $this->authorizeTaskStatus($task);
 
         $data = $request->validate([
             'status' => [
@@ -997,7 +1074,7 @@ class TaskManagerController extends Controller
         Request $request,
         Task $task
     ) {
-        $this->authorizeTask($task);
+        $this->authorizeTaskManagement($task);
 
         $task->delete();
 
@@ -1019,7 +1096,7 @@ class TaskManagerController extends Controller
         Request $request,
         Task $task
     ) {
-        $this->authorizeTask($task);
+        $this->authorizeTaskManagement($task);
 
         $data = $request->validate([
             'title' => [
@@ -1101,6 +1178,8 @@ class TaskManagerController extends Controller
         Task $task
     ) {
         $this->authorizeTask($task);
+        abort_unless($task->parent, 404);
+        $this->authorizeTaskManagement($task->parent);
 
         $task->load('parent');
 
@@ -1157,6 +1236,8 @@ class TaskManagerController extends Controller
     public function destroySubtask(Task $task)
     {
         $this->authorizeTask($task);
+        abort_unless($task->parent, 404);
+        $this->authorizeTaskManagement($task->parent);
 
         $task->load('parent');
 
@@ -1275,7 +1356,8 @@ class TaskManagerController extends Controller
 
         $tasksQuery = Task::query()
             ->whereIn('id', $taskIds)
-            ->where('workspace_id', $workspace->id);
+            ->where('workspace_id', $workspace->id)
+            ->whereIn('space_id', $this->accessibleSpaceIds($workspace->id));
 
         if ($space) {
             $tasksQuery->where(
@@ -1310,6 +1392,8 @@ class TaskManagerController extends Controller
                     403,
                     'Task tidak dapat diakses.'
                 );
+
+                $this->authorizeTaskManagement($task);
 
                 $task->update([
                     'status' => $column['status'],
@@ -1539,7 +1623,7 @@ class TaskManagerController extends Controller
         Request $request,
         Task $task
     ) {
-        $this->authorizeTask($task);
+        $this->authorizeTaskManagement($task);
 
         $data = $request->validate([
             'depends_on_task_id' => [
@@ -1568,7 +1652,7 @@ class TaskManagerController extends Controller
             $dependsOnTaskId
         );
 
-        $this->authorizeTask($dependsOnTask);
+        $this->authorizeTaskManagement($dependsOnTask);
 
         abort_unless(
             (int) $dependsOnTask->workspace_id ===
@@ -1642,7 +1726,7 @@ class TaskManagerController extends Controller
         Task $task,
         TaskDependency $dependency
     ) {
-        $this->authorizeTask($task);
+        $this->authorizeTaskManagement($task);
 
         abort_unless(
             $dependency->task_id == $task->id,
