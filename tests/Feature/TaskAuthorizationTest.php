@@ -201,6 +201,26 @@ class TaskAuthorizationTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_task_creator_can_delete_own_task(): void
+    {
+        [$owner, $space, $list] = $this->createSpace();
+        $creator = User::factory()->create();
+
+        $space->members()->attach($creator->id, [
+            'invited_by' => $owner->id,
+        ]);
+
+        $task = $this->createTask($space, $list, $creator);
+
+        $this->actingAs($creator)
+            ->delete(route('tasks.destroy', $task))
+            ->assertRedirect();
+
+        $this->assertSoftDeleted('tasks', [
+            'id' => $task->id,
+        ]);
+    }
+
     public function test_unrelated_user_cannot_view_or_change_task(): void
     {
         [$owner, $space, $list] = $this->createSpace();
