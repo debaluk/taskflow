@@ -99,6 +99,51 @@ class TaskWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_dependency_must_stay_within_the_same_space(): void
+    {
+        [$owner, $space, $list, $creator] = $this->createSpaceWithMember();
+        $task = $this->createTask($space, $list, $creator, 'Task Space A');
+
+        $otherSpace = Space::create([
+            'uuid' => (string) Str::uuid(),
+            'workspace_id' => $space->workspace_id,
+            'owner_id' => $owner->id,
+            'name' => 'Space Lain',
+            'slug' => 'space-lain-' . Str::lower(Str::random(6)),
+            'is_active' => true,
+        ]);
+        $otherSpace->members()->attach([
+            $owner->id => ['invited_by' => $owner->id],
+            $creator->id => ['invited_by' => $owner->id],
+        ]);
+
+        $otherList = TaskList::create([
+            'uuid' => (string) Str::uuid(),
+            'space_id' => $otherSpace->id,
+            'name' => 'List Space Lain',
+            'slug' => 'list-space-lain',
+            'is_active' => true,
+        ]);
+        $otherTask = $this->createTask(
+            $otherSpace,
+            $otherList,
+            $creator,
+            'Task Space B'
+        );
+
+        $this->actingAs($creator)
+            ->postJson(route('tasks.dependency.store', $task), [
+                'depends_on_task_id' => $otherTask->id,
+                'dependency_type' => 'FS',
+            ])
+            ->assertUnprocessable();
+
+        $this->assertDatabaseMissing('task_dependencies', [
+            'task_id' => $task->id,
+            'depends_on_task_id' => $otherTask->id,
+        ]);
+    }
+
     public function test_task_creator_can_reorder_tasks_in_accessible_list(): void
     {
         [$owner, $space, $list, $creator] = $this->createSpaceWithMember();
