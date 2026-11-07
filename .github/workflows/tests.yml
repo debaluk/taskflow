@@ -30,7 +30,7 @@ jobs:
 
       - name: Prepare application environment
         run: |
-          cp .env.example .env
+          touch .env
           php artisan key:generate
 
       - name: Run automated tests
