@@ -121,31 +121,13 @@ Security dan data access:
 
 ## 5. Workspace
 
-Workspace adalah container tingkat database.
+Workspace dipertahankan sebagai wadah teknis internal. Aplikasi saat ini menggunakan Workspace ID 1; Workspace bukan konteks kerja yang dipilih pengguna dan bukan sumber otorisasi pengguna.
 
-Workspace:
-
-- tetap berada di database;
-- memiliki workspace_id;
-- menjadi boundary data;
-- digunakan untuk filtering;
-- dapat digunakan sebagai dasar authorization;
-- mendukung kebutuhan integrasi ClickUp;
-- tidak ditampilkan sebagai node utama sidebar.
-
-Workspace tidak dihapus dari database hanya karena tidak tampil pada UI.
-
-Owner tidak boleh di-hardcode.
-
-Jangan menggunakan:
-
-    owner_id = 1
-
-sebagai default global.
-
-Owner harus berasal dari user sebenarnya atau business rule yang benar.
-
----
+Aturan:
+- workspace_id tetap disimpan pada data yang memerlukannya untuk menjaga relasi dan kompatibilitas.
+- Akses pengguna ditentukan oleh Owner dan keanggotaan pada Space.
+- Route manajemen/pemilihan Workspace legacy tidak tersedia pada alur aplikasi.
+- Jangan menghapus Workspace ID 1 atau mengubah arsitektur ini tanpa keputusan baru.
 
 ## 6. Space
 
@@ -244,44 +226,14 @@ Aturan:
 
 ## 11. Ownership
 
-Ownership merupakan salah satu dasar authorization TaskFlow.
+Ownership utama pada tingkat area kerja berada di Space.
 
-Konsep:
-
-    Owner
-      |
-      v
-    Owned Data
-      |
-      v
-    Authorization
-      |
-      v
-    Filtering
-
-Owner tidak boleh di-hardcode.
-
-Salah:
-
-    $ownerId = 1;
-
-Benar secara konsep:
-
-    $ownerId = auth()->id();
-
-atau owner yang diberikan melalui business rule.
-
-Ownership digunakan untuk menentukan:
-
-- data yang dapat dilihat;
-- data yang dapat diubah;
-- data yang dapat dihapus;
-- filtering Space;
-- filtering List;
-- filtering Task;
-- authorization.
-
----
+- Setiap Space wajib memiliki owner_id yang mengacu ke users.id.
+- Owner Space otomatis menjadi anggota awal pada space_members.
+- Owner dapat melihat dan mengelola seluruh Task pada Space miliknya, serta mengelola anggota dan pengaturan Space.
+- Member Space dapat melihat Task dan membuat Task baru.
+- Pembuat Task dapat mengubah detail dan menghapus Task yang dibuatnya.
+- Owner tidak di-hardcode; Owner berasal dari pengguna yang membuat Space atau business rule yang sah.
 
 ## 12. Authorization
 
@@ -313,12 +265,12 @@ Backend tetap harus melakukan pemeriksaan akses.
 
 ## 13. Data Filtering
 
-Query harus mengikuti context user.
+Query aplikasi harus dibatasi pada Space yang dapat diakses pengguna.
 
     Logged-in User
           |
           v
-    Authorized Workspace
+    Owned Space / space_members
           |
           v
     Authorized Space
@@ -329,41 +281,19 @@ Query harus mengikuti context user.
           v
     Authorized Task
 
-Hindari query global seperti:
-
-    Task::all();
-
-pada halaman yang seharusnya menggunakan filtering authorization.
-
----
+Workspace ID 1 hanya menjadi wadah teknis internal. Jangan menggunakan workspace_members atau members global sebagai pengganti keanggotaan Space.
 
 ## 14. Members
 
-Member bukan global People Directory.
+Tabel members adalah direktori anggota global dan mapping identitas ClickUp. Direktori ini bukan sumber otorisasi Space dan bukan sumber eligibility assignment.
 
-User menjadi eligible untuk assignment setelah ditambahkan sebagai Member.
-
-Flow:
-
-    User
-      |
-      | add / invite
-      v
-    Member
-      |
-      | eligible
-      v
-    Task Assignment
-
-Member berarti boleh dipilih sebagai assignee.
-
-Menjadi Member tidak otomatis mendapatkan Task.
-
----
+- Pengguna terautentikasi dapat membaca/mencari direktori sesuai route aplikasi.
+- Penambahan/penghapusan anggota global menunggu Role Management dan Administrator Sistem pada Fase 6.
+- Owner Space tidak mengelola direktori global; Owner hanya mengelola anggota Space melalui space_members.
 
 ## 15. Members Table
 
-Struktur:
+Struktur utama:
 
     members
     ├── id
@@ -373,95 +303,50 @@ Struktur:
     ├── created_at
     └── updated_at
 
-Field:
-
-### id
-
-Primary key.
-
-### user_id
-
-User yang menjadi Member.
-
-### invited_by
-
-User yang menambahkan atau mengundang Member.
-
-### clickup_user_id
-
-Mapping user ClickUp untuk kebutuhan integrasi masa depan.
-
----
+Tabel ini mempertahankan kebutuhan direktori dan integrasi ClickUp. Relasi keanggotaan Space disimpan terpisah pada space_members.
 
 ## 16. Member Routes
 
-Route utama:
+Route direktori global:
 
     GET    /members
     POST   /members
     DELETE /members/{member}
+    GET    /members/search-users
 
-Named routes:
+Route baca tersedia bagi pengguna terautentikasi. Pembatasan mutasi tambah/hapus ke Administrator Sistem ditunda sampai Role Management tersedia; keputusan ini tercatat pada roadmap Fase 6.
 
-    members.index
-    members.store
-    members.destroy
+Keanggotaan Space dikelola melalui:
 
-Halaman menggunakan konsep:
+    GET    /spaces/{space}/members
+    POST   /spaces/{space}/members
+    DELETE /spaces/{space}/members/{user}
 
-    Anggota
-
-    Kelola anggota yang dapat ditugaskan ke tugas
-
-Saat ini belum ada role atau permission kompleks pada Member.
-
----
+Hanya Owner Space yang boleh mengelola anggota Space.
 
 ## 17. Assignment
 
-Assignment harus menggunakan Member sebagai sumber assignee.
+Assignment hanya boleh diberikan kepada Owner atau pengguna yang tercatat sebagai anggota Space terkait pada space_members.
 
-    Users
-      |
-      X
-      |
-    Members
+    Space
       |
       v
-    Assignee Picker
+    space_members
+      |
+      v
+    Eligible Assignee
+      |
+      v
+    task_assignees
       |
       v
     Task
 
-Tidak boleh mengambil seluruh users sebagai sumber assignee.
-
-Aturan utama:
-
-> Hanya Member yang eligible menjadi assignee.
-
----
+Direktori members global tidak memberikan hak assignment. Backend memvalidasi keanggotaan Space pada setiap perubahan assignment.
 
 ## 18. Task Assignees
 
-Assignment disimpan pada:
-
-    task_assignees
-
-Relasi:
-
-    Task
-     |
-     +-- Assignee
-     |
-     +-- Assignee
-
-Database dapat mendukung lebih dari satu assignee jika diperlukan.
-
-Namun sumber assignee tetap:
-
-    members
-
----
+Assignment disimpan pada tabel task_assignees dengan pasangan unik task_id + user_id dan foreign key ke Task/User. Struktur database mendukung relasi banyak assignee, sementara endpoint assignment saat ini mengatur satu PIC atau mengosongkannya.
 
 ## 19. My Tasks
 
@@ -636,61 +521,42 @@ Activity belum dapat dianggap sebagai audit trail lengkap.
 
 ## 30. Database Architecture
 
-Database utama:
+Database dikonfigurasi melalui environment DB_*; nama database tidak di-hardcode pada source.
 
-    MariaDB
+Tabel utama:
+- users, workspaces, spaces, space_members
+- folders, task_lists, tasks
+- task_assignees, task_dependencies, activities
+- members sebagai direktori global
 
-Database:
-
-    task_management
-
-Core tables:
-
-    users
-    members
-    workspaces
-    spaces
-    folders
-    task_lists
-    tasks
-    task_assignees
-    task_dependencies
-    activities
-
-Legacy / compatibility:
-
-    workspace_members
-
----
+workspace_members dipertahankan sebagai relasi legacy/kompatibilitas dan bukan sumber otorisasi Space.
 
 ## 31. Database Relationships
 
     users
      |
-     +-- members
+     +-- members (direktori global)
      |
-     +-- ownership
-     |
-     +-- task assignment
+     +-- space_members
+              |
+              v
+            spaces
+              |
+              +-- folders
+              |     |
+              |     +-- task_lists
+              |
+              +-- task_lists
+                    |
+                    v
+                   tasks
+                    |
+                    +-- parent_id (Subtask)
+                    +-- task_assignees
+                    +-- task_dependencies
+                    +-- activities (polymorphic)
 
-    workspaces
-     |
-     +-- spaces
-           |
-           +-- folders
-           |     |
-           |     +-- task_lists
-           |
-           +-- task_lists
-                 |
-                 +-- tasks
-                        |
-                        +-- subtasks
-                        +-- task_assignees
-                        +-- task_dependencies
-                        +-- activities
-
----
+Owner Space juga direferensikan oleh spaces.owner_id. Keanggotaan dan assignment tetap terpisah.
 
 ## 32. Database Rules
 
@@ -723,55 +589,34 @@ Gunakan migration baru untuk perubahan schema.
 ## 33. Models
 
 Model utama:
+- Activity
+- Folder
+- Member
+- Space
+- SpaceMember
+- Task
+- TaskDependency
+- TaskList
+- User
+- Workspace
+- WorkspaceMember (legacy)
 
-    Activity
-    Folder
-    Member
-    Space
-    Task
-    TaskDependency
-    TaskList
-    User
-    Workspace
-    WorkspaceMember
-
-Model harus mengikuti relationship database.
-
----
+Relasi model harus konsisten dengan foreign key dan keputusan otorisasi Space.
 
 ## 34. Controllers
 
-Controller utama:
+Controller aktif pada route aplikasi mencakup:
+- ActivityController
+- AuthController
+- FolderController
+- MemberController
+- SettingsController
+- SpaceController
+- SpaceMemberController
+- TaskListController
+- TaskManagerController
 
-    ActivityController
-    AuthController
-    Controller
-    FolderController
-    MemberController
-    SettingsController
-    SpaceController
-    TaskListController
-    TaskManagerController
-    WorkspaceController
-    WorkspaceMemberController
-
-Flow umum:
-
-    Route
-      |
-      v
-    Controller
-      |
-      v
-    Authorization
-      |
-      v
-    Model / Query
-      |
-      v
-    View
-
----
+Controller Workspace lama tetap berada di source bila masih dibutuhkan kompatibilitas, tetapi route manajemen/pemilihan Workspace tidak aktif.
 
 ## 35. Views
 
@@ -864,15 +709,11 @@ Field members.clickup_user_id disiapkan untuk mapping identitas direktori global
 
 ## 40. Import Data
 
-Command import yang tersedia:
+Command legacy yang dipertahankan untuk pengembangan berikutnya:
 
-    php artisan ipas:import-tasks
+    php artisan task:import-ipas <file.csv>
 
-Data IPAS v2 hanya merupakan contoh seed.
-
-Aplikasi harus tetap mendukung Workspace, Space, List, User, dan Member lain.
-
----
+Command ini belum siap digunakan. Audit menemukan proses reset data dilakukan sebelum validasi CSV dan belum memenuhi kewajiban Owner serta space_members pada Space hasil import. Jangan menjalankannya pada database produksi. Perbaikan command menjadi backlog Fase 5.
 
 ## 41. Development Rules
 
@@ -966,34 +807,30 @@ Untuk perubahan besar:
 
 ## 43. Useful Laravel Commands
 
-Install:
+Install dependency:
 
     composer install
-    npm install
+    npm ci
+
+Build asset bila perubahan menggunakan Vite:
+
+    npm run build
 
 Development:
 
     php artisan serve
     npm run dev
 
-Migration:
+Migration dan pemeriksaan:
 
-    php artisan migrate
     php artisan migrate:status
+    php artisan migrate
 
-Clear cache:
-
-    php artisan optimize:clear
-
-Routes:
-
-    php artisan route:list
-
-Tests:
+Pengujian otomatis:
 
     php artisan test
 
----
+Pada produksi, backup database sebelum migration dan gunakan php artisan migrate --force. Jangan menjalankan migrate:fresh atau migrate:refresh pada database produksi.
 
 ## 44. Git Workflow
 
@@ -1030,56 +867,19 @@ File yang tidak boleh masuk repository:
 
 ## 45. Project Environment
 
-Project:
+Konfigurasi environment disediakan melalui .env.example; rahasia dan kredensial hanya disimpan pada file .env di masing-masing lingkungan dan tidak boleh masuk repository.
 
-    /home/debaluk/workspace/task
-
-Local domain:
-
-    https://task.labku.biz.id
-
-Database:
-
-    task_management
-
-PHP:
-
-    8.3.x
-
-MariaDB:
-
-    10.6.x
-
----
+Detail deployment, backup, verifikasi, dan rollback produksi berada pada docs/deployment.md. Jangan menganggap nilai environment lokal sebagai nilai untuk produksi.
 
 ## 46. Current Development Priority
 
-Prioritas utama:
+Prioritas pengembangan mengikuti docs/roadmap/README.md.
 
-    1. UI cleanup
-    2. Ownership
-    3. Authorization
-    4. Data Filtering
-    5. Members
-    6. Assignment
-    7. My Tasks
-    8. Dashboard
-    9. Agenda
-    10. Inbox
+Status saat dokumentasi ini diperbarui:
+- Fase 1 — Stabilization & Foundation: audit dan hardening sedang diselesaikan.
+- Fase 2–6: belum dimulai sebagai fase pengembangan berikutnya.
 
-Tahap berikutnya:
-
-    11. Board
-    12. Calendar
-    13. Gantt
-    14. ClickUp Import
-    15. Advanced Collaboration
-    16. Automation
-    17. Reporting
-
-Favorites tetap pending.
-
----
+Agenda, Inbox, Favorites, dan integrasi import tidak boleh dinyatakan selesai hanya karena route atau view placeholder tersedia.
 
 ## 47. Ownership + Assignment Roadmap
 
@@ -1198,67 +998,45 @@ bersih dari masalah formatting dan file yang tidak seharusnya masuk repository.
 
 ## 52. Current Architecture Summary
 
-    TASKFLOW
-       |
-       +-------------------+
-       |                   |
-       v                   v
-    Identity          Authorization
-       |                   |
-       v                   v
-     Users             Ownership
-       |
-       v
-    Members
-       |
-       v
-    Assignment
-       |
-       v
-      Tasks
-       |
-       +---------+---------+
-       |                   |
-       v                   v
-    Subtasks          Dependencies
+    Authenticated User
+          |
+          v
+    Workspace ID 1 (wadah teknis)
+          |
+          v
+    Owned Space / space_members
+          |
+          +-- Folder (opsional)
+          +-- List
+                 |
+                 v
+                Task
+                 |
+                 +-- Subtask bertingkat
+                 +-- Assignee (space_members)
+                 +-- Dependency
+                 +-- Activity / Note
 
-Data hierarchy:
-
-    Workspace
-        |
-        +-- Space
-              |
-              +-- Folder
-              |     |
-              |     +-- List
-              |
-              +-- List
-                    |
-                    +-- Task
-                          |
-                          +-- Subtask
-
----
+Direktori members global terpisah dari otorisasi dan assignment Space.
 
 ## 53. Golden Rules
 
-1. Jangan hardcode owner.
-2. Assignment hanya melalui Member.
-3. My Tasks berdasarkan assignee.
-4. workspace_id tetap ada.
-5. Workspace bukan node UI utama.
-6. Space dan List harus dinamis.
-7. IPAS v2 hanya data contoh.
-8. Authorization harus dilakukan di backend.
-9. Hidden UI bukan security.
-10. Migration adalah source of truth schema.
-11. Subtask tetap menggunakan Task.
-12. Subtask tidak mengubah due date parent.
-13. Favorites tetap pending sampai diminta.
-14. Jangan menambah role/permission kompleks sebelum diperlukan.
-15. Context yang sudah diketahui sistem tidak perlu diminta ulang.
-
----
+1. Jangan hardcode Owner.
+2. Workspace ID 1 tetap menjadi wadah teknis internal.
+3. Otorisasi data dilakukan berdasarkan Owner/Member Space.
+4. space_members adalah sumber keanggotaan Space.
+5. members global hanya direktori dan mapping ClickUp.
+6. Assignment hanya kepada Owner/Member Space terkait.
+7. My Tasks berdasarkan assignee.
+8. Space dan List harus dinamis.
+9. Authorization harus dilakukan di backend.
+10. Hidden UI bukan security.
+11. Migration adalah source of truth schema.
+12. Subtask tetap menggunakan tabel tasks dan relasi parent_id.
+13. Menghapus Task/Subtask melakukan soft-delete pada seluruh keturunan Subtask.
+14. Jika Subtask aktif habis, progres Task induk dipertahankan.
+15. Favorites tetap pending sampai diminta.
+16. Jangan menambah role/permission kompleks sebelum kebutuhan dan desainnya disepakati.
 
 ## 54. Development Philosophy
 
@@ -1305,26 +1083,16 @@ Setiap layer harus stabil sebelum melanjutkan ke layer berikutnya.
 
 TaskFlow masih dalam tahap Active Development.
 
-Fokus utama saat ini:
+Fondasi yang telah selesai dan diverifikasi:
+- Workspace internal ID 1 dan route manajemen Workspace legacy dinonaktifkan.
+- Otorisasi Owner/Member Space dan Task.
+- Manajemen keanggotaan Space melalui space_members.
+- Pengujian otomatis untuk autentikasi, otorisasi, Task, Subtask, Dependency, route, dan struktur Space.
+- GitHub Actions untuk test PHP dan pemeriksaan sintaks JavaScript.
 
-    Ownership
-    Authorization
-    Data Filtering
-    Members
-    Assignment
-    My Tasks
+Fase 1 belum dinyatakan selesai sampai audit validasi, integritas relasi, dokumentasi, serta kesiapan rilis ditutup dan CI akhir hijau.
 
-Pending:
-
-    Favorites
-    Advanced Permissions
-    Advanced Roles
-    ClickUp Import
-    Automation
-    Advanced Collaboration
-    Reporting
-
----
+Fitur yang masih menjadi placeholder/backlog antara lain Agenda, Inbox, Favorites, penyimpanan koneksi OAuth jangka panjang, dan import ClickUp/IPAS.
 
 ## 56. Final Principle
 

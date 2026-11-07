@@ -221,11 +221,11 @@ Aturan tambahan:
 - Endpoint note menggunakan tabel `activities` dengan action `task_note`; Owner/pembuat/assignee dapat menambahkan note pada Task yang dapat diaksesnya. Note ditampilkan pada detail Task dan tidak memiliki aksi edit/hapus.
 ### P1 — Penting setelah P0
 
-- [ ] **F1-05 — Audit validasi dan konsistensi request**
+- [x] **F1-05 — Audit validasi dan konsistensi request**
   - Periksa validasi input pada endpoint utama.
   - Pastikan respons sukses/gagal konsisten dan kesalahan tidak membocorkan detail sensitif.
   - Kriteria penerimaan: input tidak valid ditolak dengan pesan yang layak dan data tidak berubah sebagian.
-  - **Status: In Progress (8 November 2026).** Audit dan koreksi awal sudah berjalan pada branch `main`; belum seluruh endpoint dan skenario request selesai diaudit.
+  - **Status: Done (8 November 2026).** Audit endpoint utama dan koreksi temuan konkret telah diselesaikan; seluruh regression test terkait lulus CI. Tidak ditemukan temuan validasi/response tersisa yang memerlukan perubahan dalam ruang lingkup Fase 1.
   - **Temuan audit awal:**
     - Redirect Task create/update/delete telah memakai `safeReturnUrl()`, memvalidasi tipe/panjang input, dan menolak URL eksternal, skema tidak didukung, karakter ambigu, serta authority yang tidak sesuai host/port aplikasi.
     - Endpoint pembuatan Subtask masih memakai `return_url` mentah untuk redirect. Ini membuka jalur open redirect yang belum tertutup oleh pengamanan Task utama.
@@ -268,6 +268,9 @@ Aturan tambahan:
     - Pengujian sebelumnya tetap mencakup URL eksternal pada Task create/update/delete, tipe input return URL tidak valid, tanggal Task, ID Reorder duplikat, serta slug Folder duplikat.
   - **Commit terkait F1-05:** `68b867e`, `c3d0a10`, `e3b1e1f`, `8e180c4`, `29b8d22`, `2084073`, `d8980e9`, `7da590e`, `37ffb05`, `8a46d2c`, `f371f21`, `ec46dd0`, `7d35c27`, `bc72c50`, `4ee0532`, `d187957`, `9f6bd33`, `ab168a6`, `3a568c3`, `4dd4c68`, `6ba7f95`, `90c46f1`, `fcbb8b9`, `b9c0347`, `8373558`, `93d8315`, `ba7e61f`, `af12b18`, `25e9d95`, `b8a7df9`, `54e5bee`, `ee513a9`, `c004ac1`, `ed2fa5e` (Reorder hanya Task induk), dan `81a6ebc` (regression test Reorder/Subtask).
   - **Hasil CI:** baseline sebelum koreksi terakhir, run `42406417459`, sukses dengan **39 test passed (159 assertions)**. Setelah koreksi Subtask/Reorder, run `42407983588` sukses dengan **42 test passed (168 assertions)**. Koreksi validasi Member pada run `42408158095` sukses dengan **42 test passed (168 assertions)**; setelah dua pengujian Member ditambahkan, run `42408170805` sukses dengan **44 test passed (174 assertions)**. Koreksi ClickUp OAuth pada run `42408313664` sukses dengan **44 test passed (174 assertions)**; setelah dua pengujian OAuth ditambahkan, run `42408332560` sukses dengan **46 test passed (183 assertions)**. Validasi filter query pada run `42408472281` sukses dengan **46 test passed (183 assertions)**; setelah pengujian filter ditambahkan, run `42408488295` sukses dengan **47 test passed (193 assertions)**. Perbaikan siklus Folder dan slug soft-deleted diverifikasi pada run `42408813717`, sukses dengan **50 test passed (205 assertions)**. Pencegahan siklus Dependency diverifikasi pada run `42408979869`, sukses dengan **51 test passed (209 assertions)**. Pengamanan OAuth state dan timeout ClickUp diverifikasi pada run `42409248554`, sukses dengan **53 test passed (220 assertions)**. Rate limit login dan registrasi diverifikasi pada run `42409460051`, sukses dengan **55 test passed (243 assertions)**. Pengaman penghapusan Folder berisi struktur aktif diverifikasi pada run `42409633220`, sukses dengan **56 test passed (250 assertions)**. Pengaman penghapusan Space dan pembersihan assignment saat anggota dikeluarkan diverifikasi pada run `42410096300`, sukses dengan **58 test passed (260 assertions)**. Pemeriksaan sintaks JavaScript juga sukses. Dua run di antara commit awal dan koreksi referensi transaksi sempat gagal karena kesalahan sintaks pada penulisan namespace facade; diperbaiki pada commit `7da590e` dan diverifikasi ulang melalui run sukses.
+  - **Koreksi lanjutan penghapusan Subtask bertingkat:** helper `softDeleteTaskTree()` kini digunakan oleh penghapusan Task dan penghapusan Subtask. Penghapusan Subtask langsung juga menghapus seluruh keturunannya dalam satu transaksi, tetapi tetap mempertahankan parent di atasnya. Jika tidak ada Subtask aktif tersisa, progres parent tidak diubah. Regression test ditambahkan pada `TaskWorkflowTest::test_deleting_subtask_soft_deletes_all_nested_subtasks_and_keeps_parent()`. CI run `42414221412` sukses: **63 test passed (282 assertions)** dan pemeriksaan JavaScript sukses.
+  - **Temuan privasi pada layout:** layout sebelumnya mengekspos nama/email seluruh record `users` ke JavaScript pada setiap halaman authenticated. Query global dan ekspor `window.systemUsers` dihapus. Regression test `SpaceVisibilityTest::test_layout_does_not_expose_unrelated_registered_user_details()` memastikan detail pengguna di luar Space tidak muncul. CI run `42414568390` sukses: **64 test passed (285 assertions)** dan pemeriksaan JavaScript sukses.
+  - **Kesimpulan F1-05:** validasi Task/Subtask/Dependency, filter request, URL redirect, Reorder, OAuth, autentikasi, struktur Space/Folder/List, dan respons kegagalan telah diperiksa. Perubahan yang terbukti diperlukan telah memiliki regression test; tidak ada perubahan spekulatif pada perilaku yang sudah benar.
   - **Verifikasi koreksi Reorder/Subtask (8 November 2026):** commit kode `ed2fa5e` dan regression test `81a6ebc` telah dikirim ke `main`. GitHub Actions run `42411260752` dan run terbaru setelah pembaruan roadmap `42411282654` berstatus **success**; suite menghasilkan **60 test passed (269 assertions)** dan pemeriksaan sintaks JavaScript `node --check public/js/task-manager.js` juga sukses.
   - **Temuan dan koreksi OAuth ClickUp (8 November 2026):** request token telah memiliki connect timeout 5 detik dan timeout total 10 detik, tetapi kegagalan koneksi (`ConnectionException`) belum ditangani. Kondisi ini dapat menghasilkan HTTP 500. `SettingsController::clickupCallback()` kini menangkap exception tersebut, mencatat log tanpa menyimpan detail sensitif, dan mengembalikan pesan kegagalan yang aman ke halaman Settings.
   - **Regression test:** `ClickUpOAuthValidationTest::test_callback_handles_provider_connection_failure_without_server_error()` memaksa koneksi provider gagal dan memastikan callback tetap redirect ke Settings, menampilkan pesan yang sesuai, serta tidak menyimpan access token atau status connected.
@@ -290,20 +293,27 @@ Aturan tambahan:
   - **Regression test:** `TaskWorkflowTest::test_deleting_subtask_soft_deletes_all_nested_subtasks_and_keeps_parent()` memastikan penghapusan Subtask bertingkat tidak menghapus induk dan tidak meninggalkan keturunan aktif.
   - **Status:** koreksi dan test ditambahkan; menunggu verifikasi CI. F1-05 tetap **In Progress**.
 
-- [ ] **F1-06 — Audit relasi dan integritas data**
+- [x] **F1-06 — Audit relasi dan integritas data**
   - Periksa relasi parent–subtask, assignee, dependency, dan struktur Workspace.
   - Tinjau perilaku penghapusan dan foreign key agar tidak meninggalkan data yatim.
   - Kriteria penerimaan: operasi perubahan/penghapusan menjaga integritas relasi.
+  - **Hasil audit (8 November 2026):** relasi `space_members`, `task_assignees`, `task_dependencies`, `parent_id`, Folder/List/Space, dan foreign key diperiksa. Unique pair dan FK cascade/restrict/null-on-delete sesuai kebutuhan; soft-delete mempertahankan record relasi agar data dapat dipulihkan, sementara penghapusan Task/Subtask melakukan cascade soft-delete seluruh keturunan. Penghapusan Folder/Space ditolak selama masih memiliki struktur/Task aktif; pengeluaran anggota membersihkan assignment dalam transaksi. Dependency cycle dan Folder hierarchy cycle telah dicegah dan diuji.
+  - **Status F1-06: Done (8 November 2026).** Regression test integritas struktur, penghapusan, assignment, dan hierarchy lulus pada CI terbaru run `42414568390` (**64 test passed, 285 assertions**).
 
-- [ ] **F1-07 — Selaraskan dokumentasi dengan implementasi**
+- [x] **F1-07 — Selaraskan dokumentasi dengan implementasi**
   - Perbarui README bila deskripsi fitur tidak sesuai dengan kondisi aktual.
   - Tegaskan fitur yang masih placeholder atau belum aktif.
   - Kriteria penerimaan: dokumentasi tidak menyatakan fitur selesai jika implementasinya belum tersedia atau belum teruji.
+  - **Koreksi dokumentasi (8 November 2026):** README diselaraskan dengan arsitektur Workspace ID 1 sebagai wadah internal, Owner/Member Space, direktori `members` global, sumber assignment `space_members`, status Folder, perilaku Subtask/progres, fitur Agenda/Inbox/Favorites placeholder, Activity yang belum merupakan audit trail lengkap, OAuth ClickUp berbasis session, dan import IPAS yang belum siap.
+  - **Status F1-07: Done (8 November 2026).** README tidak lagi menyatakan fitur placeholder sebagai fitur operasional dan mengarahkan ke roadmap untuk status pengembangan.
 
 - [ ] **F1-08 — Verifikasi konfigurasi dan kesiapan rilis**
   - Periksa konfigurasi environment, session, logging, cache, dan penanganan error tanpa mengubah konfigurasi server di luar kebutuhan.
   - Pastikan langkah deploy dan rollback terdokumentasi.
   - Kriteria penerimaan: prosedur rilis dapat diikuti dan verifikasi pascadeploy jelas.
+  - **Koreksi dokumentasi (8 November 2026):** `.env.example` ditambahkan tanpa kredensial/rahasia; file tersebut menyediakan nilai contoh untuk local setup dan memperbaiki ketergantungan script Composer yang mengharapkan file ini. `docs/deployment.md` ditambahkan berisi prasyarat, backup database, pull branch `main`, Composer install, migration, cache clear, verifikasi pascadeploy, serta batas aman rollback. Prosedur melarang `migrate:fresh`/`migrate:refresh` di produksi dan tidak meminta perubahan konfigurasi VPS.
+  - **Pemeriksaan source config:** default session/cache/queue menggunakan database; logging menggunakan stack/single; ClickUp credentials dibaca dari environment; production `APP_DEBUG=false` dan kredensial DB/session secure cookie tetap harus diverifikasi pada `.env` VPS, karena file produksi tidak dapat dibaca dari repository.
+  - **Status F1-08: In Progress.** Dokumen dan template selesai; menunggu verifikasi environment produksi yang disanitasi oleh operator. Jangan menampilkan nilai APP_KEY, password, token, atau secret.
 
 ## 4.2 Urutan Pelaksanaan
 
