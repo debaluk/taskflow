@@ -47,7 +47,7 @@ Status berikut menggambarkan keberadaan implementasi pada source code. Status **
 
 ### Catatan arsitektur dari audit
 
-- Resolusi Workspace aktif pada `TaskManagerController` ditemukan menggunakan ID Workspace tetap `1`. Ini perlu ditinjau karena berisiko tidak sesuai dengan prinsip Workspace dinamis dan batas akses pengguna.
+- Workspace ID `1` memang ditetapkan sebagai wadah data internal TaskFlow, bukan konteks kerja atau batas otorisasi pengguna. Akses pengguna harus ditentukan pada tingkat Space.
 - Route detail Task ditemukan didefinisikan dua kali.
 - Controller Agenda dan Inbox masih mengirim data kosong.
 - View Inbox yang dirujuk controller tidak sesuai dengan fungsi Inbox.
@@ -85,13 +85,22 @@ Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Dur
 - [ ] **F1-01 — Audit konteks Workspace aktif**
   - Telusuri seluruh alur pemilihan Workspace dan relasi user–Workspace.
   - Pastikan query Task, Space, Folder, List, dan anggota selalu dibatasi pada Workspace yang memang boleh diakses.
-  - Hilangkan ketergantungan pada ID Workspace tetap hanya setelah aturan Workspace yang benar dipastikan.
-  - Kriteria penerimaan: pengguna tidak dapat membaca atau mengubah data Workspace lain dengan manipulasi URL, parameter, atau request langsung.
+  - Pertahankan Workspace ID `1` sebagai wadah internal; jangan membangun mekanisme multi-Workspace atau mengganti scope ini tanpa keputusan baru.
+  - Pastikan seluruh akses data kerja ditentukan melalui keanggotaan dan kepemilikan Space.
+  - Kriteria penerimaan: Workspace tetap menggunakan ID `1`, sementara pengguna hanya dapat mengakses Space yang dimiliki atau dibagikan kepadanya.
 
 - [ ] **F1-02 — Audit otorisasi objek**
-  - Periksa otorisasi pada Task, Subtask, Space, Folder, List, Member, dan Dependency.
-  - Pastikan operasi baca, buat, ubah, hapus, assign, reorder, serta dependency menerapkan pemeriksaan akses di backend.
-  - Kriteria penerimaan: request tanpa hak akses ditolak secara konsisten dan tidak mengubah data.
+  - Terapkan otorisasi berbasis Space untuk Task, Subtask, Folder, List, anggota, dan Dependency.
+  - Bentuk relasi anggota pada tingkat Space. Satu Space dapat dimiliki satu Owner dan dibagikan kepada beberapa Member.
+  - Owner Space dapat melihat dan mengelola seluruh Task di Space serta mengelola anggota dan pengaturan Space.
+  - Member Space dapat melihat Task dan membuat Task baru di Space yang dibagikan kepadanya.
+  - Pembuat Task (`created_by`) dapat mengelola detail dan menghapus Task yang dibuatnya sendiri.
+  - Member yang hanya ditugaskan sebagai assignee tidak boleh mengubah detail atau menghapus Task; ia hanya boleh memperbarui status dan menambahkan note/catatan.
+  - Jika pengguna adalah pembuat sekaligus assignee, hak sebagai pembuat Task yang berlaku.
+  - Member tidak boleh mengelola anggota atau menghapus Space. Assignment hanya boleh diberikan kepada pengguna yang menjadi anggota Space terkait.
+  - Terapkan aturan pada seluruh endpoint backend, termasuk update, delete, status, assignment, reorder/Board, Subtask, dan Dependency; UI bukan pengganti otorisasi backend.
+  - Jangan mengubah tabel `members` global yang telah digunakan untuk identitas/relasi ClickUp menjadi pivot keanggotaan Space. Audit pemakaiannya dan buat relasi Space tersendiri bila diperlukan.
+  - Kriteria penerimaan: request tanpa hak akses ditolak konsisten; pembuat, assignee, dan Owner memperoleh hak sesuai matriks; manipulasi URL/request tidak dapat melewati aturan.
 
 - [ ] **F1-03 — Rapikan definisi route**
   - Verifikasi route detail Task yang terduplikasi.
@@ -105,6 +114,30 @@ Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Dur
   - Uji pembatasan akses lintas pengguna/Workspace.
   - Kriteria penerimaan: skenario inti berjalan otomatis dan hasil pengujian dapat diulang.
 
+### Ketentuan Role dan Hak Akses Space (keputusan produk)
+
+Ketentuan berikut telah disepakati dan menjadi acuan implementasi F1-02. Ini adalah role pada tingkat Space, bukan role Workspace global.
+
+| Aktivitas | Owner Space | Member pembuat Task | Member yang hanya ditugaskan |
+|---|---|---|---|
+| Melihat Space dan Task | Semua di Space miliknya | Ya, pada Space yang dibagikan | Ya, pada Space yang dibagikan |
+| Membuat Task | Ya | Ya | Ya |
+| Mengedit detail Task | Semua Task | Task yang dibuat sendiri | Tidak |
+| Mengubah status Task | Semua Task | Task yang dibuat sendiri | Ya, hanya Task yang ditugaskan kepadanya |
+| Menambahkan note/catatan | Semua Task | Task yang dibuat sendiri | Ya, hanya Task yang ditugaskan kepadanya |
+| Menghapus Task | Semua Task | Task yang dibuat sendiri | Tidak |
+| Mengelola anggota Space | Ya | Tidak | Tidak |
+| Mengubah/menghapus Space | Ya | Tidak | Tidak |
+
+Aturan tambahan:
+- `created_by` menjadi sumber kebenaran untuk menentukan pembuat Task.
+- Relasi `task_assignees` menjadi sumber kebenaran untuk menentukan pengguna yang ditugaskan.
+- Jika pengguna adalah pembuat sekaligus assignee, hak pembuat Task yang berlaku.
+- Keanggotaan Space menentukan apakah pengguna boleh masuk dan melihat Space; status pembuat/assignee menentukan tindakan yang boleh dilakukan pada Task.
+- Note berarti menambahkan catatan; hak mengedit atau menghapus note milik pengguna lain tidak diberikan oleh keputusan ini.
+- Struktur Workspace tetap satu wadah internal dengan `workspace_id = 1`. Tidak ada perubahan ke model multi-Workspace.
+- Detail hak Subtask, Dependency, dan operasi reorder harus mengikuti otorisasi induknya dan tidak boleh menjadi jalur untuk melewati batas hak Task.
+- Implementasi fitur note perlu diaudit terlebih dahulu. Jika belum tersedia, catat sebagai dependensi fitur; jangan menganggap endpoint note sudah ada.
 ### P1 — Penting setelah P0
 
 - [ ] **F1-05 — Audit validasi dan konsistensi request**
@@ -212,7 +245,7 @@ Fase 1 dinyatakan selesai jika:
 
 **Tujuan:** menyiapkan TaskFlow untuk penggunaan tim yang lebih luas.
 
-- [ ] Role dan permission yang sesuai kebutuhan nyata.
+- [ ] Penyempurnaan role/permission lanjutan di luar aturan Owner dan Member Space yang telah ditetapkan pada Fase 1.
 - [ ] Pengelolaan profil dan preferensi pengguna.
 - [ ] Audit trail untuk aktivitas penting.
 - [ ] Backup dan prosedur pemulihan.
