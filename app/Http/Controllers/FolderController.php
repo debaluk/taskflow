@@ -173,6 +173,17 @@ class FolderController extends Controller
             $folder
         );
 
+        if (
+            $folder->children()->exists() ||
+            $folder->taskLists()->exists() ||
+            $folder->tasks()->exists()
+        ) {
+            return back()->with(
+                'error',
+                "Folder \"{$folder->name}\" tidak dapat dihapus karena masih memiliki Subfolder, List, atau Task aktif."
+            );
+        }
+
         $folder->delete();
 
         return back()->with(
