@@ -1652,7 +1652,7 @@ class TaskManagerController extends Controller
             $dependsOnTaskId
         );
 
-        $this->authorizeTaskManagement($dependsOnTask);
+        $this->authorizeTask($dependsOnTask);
 
         abort_unless(
             (int) $dependsOnTask->workspace_id ===
