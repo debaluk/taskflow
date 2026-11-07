@@ -164,7 +164,6 @@ class SpaceController extends Controller
         abort_unless(
             (int) $space->workspace_id === $this->workspaceId &&
             (
-                $space->owner_id === null ||
                 (int) $space->owner_id === (int) auth()->id()
             ),
             403
