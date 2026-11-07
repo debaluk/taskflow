@@ -63,7 +63,7 @@ class TaskListController extends Controller
         Request $request,
         Space $space
     ) {
-        $this->authorizeSpace($space);
+        $this->authorizeSpaceManagement($space);
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -287,8 +287,20 @@ class TaskListController extends Controller
         Space $space
     ): void {
         abort_unless(
-            (int) $space->workspace_id === self::WORKSPACE_ID,
+            (int) $space->workspace_id === self::WORKSPACE_ID &&
+            $space->isAccessibleBy((int) auth()->id()),
             404
+        );
+    }
+
+    private function authorizeSpaceManagement(
+        Space $space
+    ): void {
+        $this->authorizeSpace($space);
+
+        abort_unless(
+            $space->isOwnedBy((int) auth()->id()),
+            403
         );
     }
 
@@ -303,7 +315,7 @@ class TaskListController extends Controller
         Space $space,
         TaskList $taskList
     ): void {
-        $this->authorizeSpace($space);
+        $this->authorizeSpaceManagement($space);
 
         /*
          * Pastikan List memang milik Space yang sedang diakses.
