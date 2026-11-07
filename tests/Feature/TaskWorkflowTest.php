@@ -298,6 +298,35 @@ class TaskWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_task_view_rejects_malformed_space_list_and_calendar_filters(): void
+    {
+        [$owner, $space, $list, $creator] = $this->createSpaceWithMember();
+
+        $this->actingAs($creator)
+            ->getJson(route('tasks.index', [
+                'space_id' => ['invalid'],
+            ]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('space_id');
+
+        $this->actingAs($creator)
+            ->getJson(route('tasks.index', [
+                'list_id' => ['invalid'],
+            ]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('list_id');
+
+        $this->actingAs($creator)
+            ->getJson(route('tasks.calendar', [
+                'space_id' => $space->id,
+                'list_id' => $list->id,
+                'month' => 13,
+                'year' => ['invalid'],
+            ]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['month', 'year']);
+    }
+
     public function test_member_without_space_access_cannot_create_task_in_that_space(): void
     {
         [$owner, $space, $list] = $this->createSpaceWithMember();
