@@ -45,6 +45,55 @@ class SpaceMemberManagementTest extends TestCase
         ]);
     }
 
+    public function test_space_cannot_be_deleted_while_active_folders_or_lists_remain(): void
+    {
+        [$owner, $space] = $this->createOwnedSpace();
+
+        $folder = \App\Models\Folder::create([
+            'uuid' => (string) Str::uuid(),
+            'workspace_id' => $space->workspace_id,
+            'space_id' => $space->id,
+            'name' => 'Folder Aktif',
+            'slug' => 'folder-aktif',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($owner)
+            ->delete(route('spaces.destroy', $space))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseHas('spaces', [
+            'id' => $space->id,
+            'deleted_at' => null,
+        ]);
+
+        $folder->delete();
+
+        $list = \App\Models\TaskList::create([
+            'uuid' => (string) Str::uuid(),
+            'space_id' => $space->id,
+            'name' => 'List Aktif',
+            'slug' => 'list-aktif',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($owner)
+            ->delete(route('spaces.destroy', $space))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseHas('spaces', [
+            'id' => $space->id,
+            'deleted_at' => null,
+        ]);
+
+        $this->assertDatabaseHas('task_lists', [
+            'id' => $list->id,
+            'deleted_at' => null,
+        ]);
+    }
+
     public function test_space_owner_can_view_and_add_members(): void
     {
         [$owner, $space] = $this->createOwnedSpace();
