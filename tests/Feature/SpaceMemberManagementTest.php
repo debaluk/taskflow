@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Space;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -100,13 +101,14 @@ class SpaceMemberManagementTest extends TestCase
         ]);
     }
 
-    public function test_space_without_owner_cannot_be_managed_by_arbitrary_user(): void
+    public function test_database_requires_an_owner_for_every_space(): void
     {
         $owner = User::factory()->create();
-        $otherUser = User::factory()->create();
         $workspace = $this->createWorkspace($owner);
 
-        $space = Space::create([
+        $this->expectException(QueryException::class);
+
+        Space::create([
             'uuid' => (string) Str::uuid(),
             'workspace_id' => $workspace->id,
             'owner_id' => null,
@@ -114,13 +116,6 @@ class SpaceMemberManagementTest extends TestCase
             'slug' => 'space-tanpa-owner',
             'is_active' => true,
         ]);
-
-        $this->actingAs($otherUser)
-            ->put(route('spaces.update', $space), [
-                'name' => 'Nama Baru',
-                'description' => null,
-            ])
-            ->assertForbidden();
     }
 
     private function createOwnedSpace(): array
