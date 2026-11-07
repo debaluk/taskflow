@@ -176,6 +176,84 @@ class TaskWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_subtask_creation_rejects_external_return_url(): void
+    {
+        [$owner, $space, $list, $creator] = $this->createSpaceWithMember();
+        $parent = $this->createTask($space, $list, $creator);
+
+        $this->actingAs($creator)
+            ->post(route('tasks.subtasks.store', $parent), [
+                'title' => 'Subtask redirect test',
+                'status' => 'open',
+                'priority' => 'normal',
+                'return_url' => 'https://evil.example/phishing',
+            ])
+            ->assertRedirect(route('tasks.index'));
+
+        $this->assertDatabaseHas('tasks', [
+            'parent_id' => $parent->id,
+            'title' => 'Subtask redirect test',
+        ]);
+    }
+
+    public function test_invalid_subtask_return_url_is_rejected_without_creating_subtask(): void
+    {
+        [$owner, $space, $list, $creator] = $this->createSpaceWithMember();
+        $parent = $this->createTask($space, $list, $creator);
+
+        $this->actingAs($creator)
+            ->post(route('tasks.subtasks.store', $parent), [
+                'title' => 'Subtask invalid redirect',
+                'status' => 'open',
+                'priority' => 'normal',
+                'return_url' => ['https://evil.example'],
+            ])
+            ->assertSessionHasErrors('return_url');
+
+        $this->assertDatabaseMissing('tasks', [
+            'parent_id' => $parent->id,
+            'title' => 'Subtask invalid redirect',
+        ]);
+    }
+
+    public function test_reorder_rolls_back_all_changes_when_one_task_cannot_be_managed(): void
+    {
+        [$owner, $space, $list, $creator] = $this->createSpaceWithMember();
+        $otherCreator = User::factory()->create();
+
+        $space->members()->attach($otherCreator->id, [
+            'invited_by' => $owner->id,
+        ]);
+
+        $ownTask = $this->createTask($space, $list, $creator, 'Task milik creator');
+        $otherTask = $this->createTask($space, $list, $otherCreator, 'Task milik member lain');
+
+        $this->actingAs($creator)
+            ->patchJson(route('tasks.reorder'), [
+                'space_id' => $space->id,
+                'list_id' => $list->id,
+                'columns' => [
+                    [
+                        'status' => 'done',
+                        'tasks' => [$ownTask->id, $otherTask->id],
+                    ],
+                ],
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('tasks', [
+            'id' => $ownTask->id,
+            'status' => 'open',
+            'position' => 1,
+        ]);
+
+        $this->assertDatabaseHas('tasks', [
+            'id' => $otherTask->id,
+            'status' => 'open',
+            'position' => 1,
+        ]);
+    }
+
     public function test_task_dates_cannot_have_due_date_before_start_date(): void
     {
         [$owner, $space, $list, $creator] = $this->createSpaceWithMember();
