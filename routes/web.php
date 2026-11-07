@@ -144,6 +144,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/spaces/{space}', [SpaceController::class, 'destroy'])
         ->name('spaces.destroy');
 
+    Route::get('/spaces/{space}/members', [SpaceMemberController::class, 'index'])
+        ->name('spaces.members.index');
+    Route::post('/spaces/{space}/members', [SpaceMemberController::class, 'store'])
+        ->name('spaces.members.store');
+    Route::delete('/spaces/{space}/members/{user}', [SpaceMemberController::class, 'destroy'])
+        ->name('spaces.members.destroy');
+
 	// =========================================================
 	// FOLDER
 	// =========================================================
