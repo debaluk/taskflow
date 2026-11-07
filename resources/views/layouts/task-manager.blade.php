@@ -1375,6 +1375,16 @@
 
                     </select>
 
+                    <button
+                        type="button"
+                        id="updateTaskStatusButton"
+                        class="btn primary hidden"
+                        style="margin-top:8px;"
+                        onclick="saveTaskStatus()"
+                    >
+                        Update status
+                    </button>
+
                 </div>
 
 
