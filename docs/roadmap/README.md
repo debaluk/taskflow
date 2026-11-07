@@ -119,7 +119,7 @@ Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Dur
   - **Commit teruji:** `f156698` (test suite hijau setelah koreksi test dashboard). Workflow dan roadmap juga telah dikoreksi/diperbarui pada commit setelahnya.
   - **Status:** Done — ruang lingkup F1-01 selesai dan lulus pengujian otomatis. Pembatasan akses berdasarkan Space tetap dikerjakan pada F1-02; tidak termasuk penutupan F1-01.
 
-- [ ] **F1-02 — Audit otorisasi objek**
+- [x] **F1-02 — Audit otorisasi objek**
   - Terapkan otorisasi berbasis Space untuk Task, Subtask, Folder, List, anggota, dan Dependency.
   - Bentuk relasi anggota pada tingkat Space. Satu Space dapat dimiliki satu Owner dan dibagikan kepada beberapa Member.
   - Owner Space dapat melihat dan mengelola seluruh Task di Space serta mengelola anggota dan pengaturan Space.
@@ -157,6 +157,7 @@ Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Dur
     - Menambahkan model `SpaceMember` dengan relasi Space, User, dan inviter.
     - Menambahkan migration `2026_11_08_000001_create_space_members_table` dengan foreign key ke Space/User, unique pair `space_id + user_id`, serta `invited_by` nullable. Tabel `members` global tidak diubah.
     - Menambahkan migration `2026_11_08_000002_add_owner_foreign_key_to_spaces_table`; penghapusan User pemilik Space dibatasi oleh foreign key `RESTRICT` agar Space tidak kehilangan Owner tanpa sengaja.
+    - Menambahkan migration `2026_11_08_000003_make_space_owner_required`; kolom `spaces.owner_id` sekarang wajib terisi. Sesuai keputusan, tidak diperlukan backfill karena tidak ada data Space lama.
     - Menambahkan `SpaceMembershipFoundationTest` untuk mass assignment Owner, relasi Owner, keanggotaan, dan inviter.
   - **Implementasi manajemen anggota Space (8 November 2026):** menambahkan `SpaceMemberController` dan halaman `spaces.members` untuk Owner melihat daftar anggota, menambahkan pengguna, dan mengeluarkan anggota. Route GET/POST/DELETE berada dalam middleware auth. Endpoint memverifikasi Owner secara eksplisit dan Workspace ID 1. Daftar Space mendapat tautan Anggota. `SpaceController::authorizeSpace()` diperketat agar hanya Owner eksplisit yang dapat mengubah, menonaktifkan, atau menghapus Space.
   - **Implementasi visibilitas Space (8 November 2026):**
@@ -176,14 +177,14 @@ Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Dur
     - Endpoint note menggunakan tabel `activities` dengan action `task_note`; note tampil di detail Task, hanya dapat ditambahkan oleh Owner/pembuat/assignee, dan tidak menyediakan edit/hapus note.
     - `ActivityController` sebelumnya menampilkan aktivitas seluruh Workspace ID 1 tanpa filter Space. Query feed sekarang dibatasi ke Task pada Space yang dapat diakses user; pengujian lintas-Space ditambahkan pada `ActivityVisibilityTest`.
     - Detail Task mengirim permission flags ke UI. Modal menampilkan kontrol sesuai hak: Owner/pembuat mengelola detail; assignee-only mengubah status dan mengirim note; member biasa hanya melihat detail serta note yang tersedia.
-  - **Pengujian otorisasi dan Activity:** `TaskAuthorizationTest` mencakup pembuatan Task oleh Member, izin status dan note assignee-only, penolakan edit/hapus/assignment/Subtask/Dependency/Reorder untuk assignee-only, hak pembuat dan Owner, penolakan user luar Space, serta batas Assignment ke anggota Space. `ActivityVisibilityTest` memastikan feed tidak membocorkan aktivitas Task dari Space lain. GitHub Actions run `42404683852` berstatus **success**: **21 test passed (82 assertions)**.
-  - **Belum dilakukan:** migration belum dijalankan pada VPS produksi. Audit endpoint lain yang belum tercakup matriks Task masih diperlukan sebelum F1-02 dinyatakan selesai. Tidak ada perubahan konfigurasi VPS.
+  - **Pengujian otorisasi dan Activity:** `TaskAuthorizationTest` mencakup pembuatan Task oleh Member, izin status dan note assignee-only, penolakan edit/hapus/assignment/Subtask/Dependency/Reorder untuk assignee-only, hak pembuat dan Owner, penolakan user luar Space, serta batas Assignment ke anggota Space. `ActivityVisibilityTest` memastikan feed tidak membocorkan aktivitas Task dari Space lain. `SpaceMemberManagementTest` memastikan Owner tidak dapat mengeluarkan dirinya sendiri dari membership. GitHub Actions run `42405067475` berstatus **success**: **23 test passed (86 assertions)**.
+  - **Status F1-02: Done pada source code dan CI (8 November 2026).** Seluruh matriks role Space/Task yang disepakati telah diterapkan dan diuji otomatis. Migration belum dijalankan pada VPS produksi; deployment menunggu keputusan/permintaan terpisah. Tidak ada perubahan konfigurasi VPS.
   
-- [ ] **F1-03 — Rapikan definisi route**
-  - Verifikasi route detail Task yang terduplikasi.
-  - Hapus definisi duplikat setelah dipastikan tidak ada perbedaan middleware atau perilaku.
-  - Periksa konflik nama route dan urutan route dinamis.
-  - Kriteria penerimaan: setiap endpoint memiliki definisi yang jelas dan route:list tidak menunjukkan konflik yang tidak disengaja.
+- [x] **F1-03 — Rapikan definisi route**
+  - Audit memastikan dua definisi GET `/tasks/{task}` menuju controller/method yang sama, memakai middleware `auth` yang sama, dan memiliki nama route identik. Satu definisi duplikat dihapus; definisi tersisa tetap diletakkan setelah route Task statis.
+  - Pemeriksaan source terhadap 51 route bernama tidak menemukan duplikasi kombinasi method+URI atau nama route.
+  - `RouteDefinitionTest` memastikan GET `tasks/{task}` terdaftar tepat satu kali dengan nama `tasks.show`.
+  - **Status F1-03: Done (8 November 2026).** GitHub Actions run `42405067475` berstatus **success**: **23 test passed (86 assertions)**.
 
 - [ ] **F1-04 — Bangun pengujian alur inti**
   - Siapkan feature test untuk autentikasi dan akses Workspace.
