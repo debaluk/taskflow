@@ -21,7 +21,7 @@ Contoh backup (gunakan nama database dari .env; jangan menaruh file backup di da
 
     cd /var/www/task
     mkdir -p /var/backups/taskflow
-    mysqldump -u <DB_USERNAME> -p --single-transaction <DB_DATABASE> > /var/backups/taskflow/taskflow-YYYYMMDD-HHMMSS.sql
+    mysqldump -u NAMA_USER_DB -p --single-transaction NAMA_DATABASE > /var/backups/taskflow/taskflow-YYYYMMDD-HHMMSS.sql
 
 Perintah akan meminta password secara interaktif. Simpan backup di lokasi yang aksesnya dibatasi dan pastikan file backup tidak kosong.
 
@@ -65,7 +65,7 @@ Catatan:
        cd /var/www/task
        git status --short
        git log -5 --oneline
-       git reset --hard <SHA_VERSI_SEBELUMNYA>
+       git reset --hard SHA_COMMIT_SEBELUMNYA
        php artisan optimize:clear
 
 4. Verifikasi aplikasi kembali normal.

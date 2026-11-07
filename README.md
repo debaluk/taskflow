@@ -314,7 +314,7 @@ Route direktori global:
     DELETE /members/{member}
     GET    /members/search-users
 
-Route baca tersedia bagi pengguna terautentikasi. Pembatasan mutasi tambah/hapus ke Administrator Sistem ditunda sampai Role Management tersedia; keputusan ini tercatat pada roadmap Fase 6.
+Route baca tersedia bagi pengguna terautentikasi. Saat ini route tambah/hapus masih dibatasi middleware auth saja; pembatasan ke Administrator Sistem belum ditegakkan karena Role Management belum tersedia. Jangan menganggap mutasi direktori global sudah memiliki pembatasan Administrator Sistem. Implementasinya ditunda dan dicatat pada roadmap Fase 6.
 
 Keanggotaan Space dikelola melalui:
 
