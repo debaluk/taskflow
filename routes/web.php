@@ -2,8 +2,6 @@
 
 use App\Http\Controllers\TaskManagerController;
 use App\Http\Controllers\MemberController;
-use App\Http\Controllers\WorkspaceController;
-use App\Http\Controllers\WorkspaceMemberController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\SpaceController;
@@ -130,35 +128,6 @@ Route::middleware('auth')->group(function () {
 
     Route::delete('/subtasks/{task}', [TaskManagerController::class, 'destroySubtask'])
         ->name('tasks.subtasks.destroy');
-
-
-    // =========================================================
-    // WORKSPACE
-    // =========================================================
-
-    Route::get('/workspaces', [WorkspaceController::class, 'index'])
-        ->name('workspaces.index');
-
-    Route::post('/workspaces', [WorkspaceController::class, 'store'])
-        ->name('workspaces.store');
-
-    Route::put('/workspaces/{workspace}', [WorkspaceController::class, 'update'])
-        ->name('workspaces.update');
-
-    Route::patch('/workspaces/{workspace}/toggle', [WorkspaceController::class, 'toggle'])
-        ->name('workspaces.toggle');
-
-    Route::delete('/workspaces/{workspace}', [WorkspaceController::class, 'destroy'])
-        ->name('workspaces.destroy');
-
-    Route::post('/workspace/switch/{workspace}', [WorkspaceController::class, 'switch'])
-        ->name('workspace.switch');
-
-    Route::post('/workspace/clear', [WorkspaceController::class, 'clear'])
-        ->name('workspace.clear');
-
-    Route::get('/workspaces/{workspace}', [WorkspaceController::class, 'show'])
-        ->name('workspaces.show');
 
 
 	// SPACE
