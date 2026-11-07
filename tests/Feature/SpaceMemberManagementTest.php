@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Space;
+use App\Models\Task;
+use App\Models\TaskList;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Database\QueryException;
