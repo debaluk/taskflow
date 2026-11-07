@@ -73,7 +73,6 @@ Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Dur
 
 # 4. Fase 1 — Stabilization & Foundation
 
-<badge-placeholder></badge-placeholder>
 
 **Tujuan:** memastikan fondasi TaskFlow aman, konsisten, dapat diuji, dan tidak menimbulkan regresi sebelum pengembangan fitur baru.
 
