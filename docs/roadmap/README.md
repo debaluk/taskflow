@@ -89,7 +89,7 @@ Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Dur
   - Pastikan seluruh akses data kerja ditentukan melalui keanggotaan dan kepemilikan Space.
   - Kriteria penerimaan: Workspace tetap menggunakan ID `1`, sementara pengguna hanya dapat mengakses Space yang dimiliki atau dibagikan kepadanya.
 
-  - **Status audit: In Progress.** Audit source F1-01 telah dilakukan; pemenuhan akses per Space akan diverifikasi bersama implementasi otorisasi F1-02.
+  - **Status audit: Testing.** Audit source dan koreksi minimum F1-01 telah dilakukan. Pemenuhan akses per Space tetap menjadi ruang lingkup implementasi otorisasi F1-02.
   - **Temuan audit (8 November 2026):**
     - `TaskManagerController::currentWorkspace()` mengunci Workspace ID `1` dan mengatur session ke ID yang sama. Perilaku ini sesuai keputusan arsitektur dan harus dipertahankan.
     - `TaskManagerController::accessibleWorkspaceIds()` mengambil ID dari `workspace_members`, tetapi alur utama Task tidak menggunakan hasil tersebut sebagai scope.
@@ -112,7 +112,9 @@ Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Dur
     - Tabel, model, dan relasi Workspace tidak dihapus; Workspace ID `1` tetap menjadi wadah teknis.
   - **Pengujian ditambahkan:** `tests/Feature/WorkspaceContextTest.php` memastikan route manajemen/switch Workspace tidak terdaftar dan route Folder tetap tersedia. Hasil eksekusi PHPUnit belum dijalankan pada lingkungan ini.
   - **Commit kode:** `c0e41fb` (disable route) dan `3f82a8e` (feature test).
-  - **Status:** Testing — perubahan kode sudah masuk `main`; menunggu eksekusi PHPUnit dan verifikasi runtime sebelum F1-01 dinyatakan Done.
+  - **Otomasi pengujian CI (8 November 2026):** workflow `.github/workflows/tests.yml` ditambahkan menggunakan GitHub Actions. Workflow berjalan pada push ke `main`, Pull Request menuju `main`, dan dapat dijalankan manual (`workflow_dispatch`). Runner menggunakan PHP 8.3, ekstensi SQLite, memasang dependency Composer termasuk `require-dev`, menyiapkan `.env`, lalu menjalankan `php artisan test`. Pengujian tidak dijalankan di VPS produksi dan tidak memerlukan perubahan dependency server.
+  - **Commit kode:** `6719a0a` (GitHub Actions workflow).
+  - **Status:** Testing — implementasi koreksi dan workflow CI sudah masuk `main`; menunggu hasil eksekusi workflow GitHub Actions. F1-01 belum dinyatakan Done.
 
 - [ ] **F1-02 — Audit otorisasi objek**
   - Terapkan otorisasi berbasis Space untuk Task, Subtask, Folder, List, anggota, dan Dependency.
@@ -137,7 +139,8 @@ Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Dur
   - Siapkan feature test untuk autentikasi dan akses Workspace.
   - Uji CRUD Task, perubahan status/prioritas, assignment, Subtask, dan Dependency.
   - Uji pembatasan akses lintas pengguna/Workspace.
-  - Kriteria penerimaan: skenario inti berjalan otomatis dan hasil pengujian dapat diulang.
+  - Siapkan dan pelihara GitHub Actions untuk menjalankan test suite secara otomatis pada push ke `main` dan Pull Request menuju `main`; pengujian tidak bergantung pada PHPUnit di VPS produksi.
+  - Kriteria penerimaan: skenario inti berjalan otomatis, workflow CI berstatus sukses, dan hasil pengujian dapat diulang.
 
 ### Ketentuan Role dan Hak Akses Space (keputusan produk)
 
