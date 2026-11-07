@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Space;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class SpaceMemberController extends Controller
@@ -15,8 +14,8 @@ class SpaceMemberController extends Controller
     {
         $this->authorizeOwner($space);
 
-        $members = $space->members()
-            ->orderBy('name')
+        $members = $space->memberships()
+            ->with(['user', 'inviter'])
             ->get();
 
         $availableUsers = User::query()
