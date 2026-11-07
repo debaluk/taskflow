@@ -245,9 +245,8 @@ function renderTaskNotes(notes) {
     }
 
     const canAdd = document.getElementById('taskNoteForm');
-    if (canAdd && !canAdd.classList.contains('hidden')) {
-        section.classList.remove('hidden');
-    }
+    const mayAdd = canAdd && !canAdd.classList.contains('hidden');
+    section.classList.toggle('hidden', !notes.length && !mayAdd);
 }
 
 
@@ -306,12 +305,8 @@ async function saveTaskNote() {
     }
 
     input.value = '';
-    const currentNotes = Array.from(
-        document.querySelectorAll('#taskNoteList article')
-    ).map(article => article.innerHTML);
-
     const noteList = document.getElementById('taskNoteList');
-    const user = document.querySelector('meta[name="user-name"]')?.content || 'Anda';
+    const user = data.note.user || 'Anda';
     const date = data.note.created_at
         ? new Date(data.note.created_at).toLocaleString('id-ID')
         : '';
