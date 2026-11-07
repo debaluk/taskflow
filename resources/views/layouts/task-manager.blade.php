@@ -2049,11 +2049,11 @@ function openEditListModal() {
     */
 
     form.action =
-        `/spaces/${encodeURIComponent(
+        appPath(`spaces/${encodeURIComponent(
             currentListActionSpaceSlug
         )}/lists/${encodeURIComponent(
             currentListActionSlug
-        )}`;
+        )}`);
 
 
     /*
@@ -2189,11 +2189,11 @@ function deleteCurrentList() {
 
 
     form.action =
-        `/spaces/${encodeURIComponent(
+        appPath(`spaces/${encodeURIComponent(
             currentListActionSpaceSlug
         )}/lists/${encodeURIComponent(
             currentListActionSlug
-        )}`;
+        )}`);
 
 
     const csrf =
