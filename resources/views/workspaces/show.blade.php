@@ -110,14 +110,7 @@
 
             <div
                 class="task-row"
-                onclick="openTaskModal(@js([
-                    'id' => $task->id,
-                    'title' => $task->title,
-                    'description' => $task->description,
-                    'status' => $task->status,
-                    'priority' => $task->priority,
-                    'due_date' => $task->due_date?->format('Y-m-d'),
-                ]))"
+                onclick="openTaskDetail({{ $task->id }})"
             >
 
                 <span class="task-name">
