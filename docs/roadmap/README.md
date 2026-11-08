@@ -377,7 +377,7 @@ Fase 1 dinyatakan selesai jika:
 
 - **Status: In Progress (8 November 2026).**
 - Gunakan tabel activities dan action task_note yang sudah ada; tidak membuat tabel komentar baru.
-- Rapikan istilah UI dari Catatan menjadi Komentar Task; komentar bersifat append-only, kronologis, menampilkan penulis dan waktu.
+- Rapikan istilah UI dari Catatan menjadi Komentar Task; komentar bersifat append-only, ditampilkan kronologis dari lama ke baru, menampilkan penulis dan waktu.
 - Hak tambah komentar mengikuti aturan Owner, pembuat Task, dan assignee; tidak tersedia edit/hapus komentar.
 - Reply/thread dan mention ditunda ke Fase 3.
 - Regression test untuk izin dan penyimpanan komentar dipertahankan; perubahan tidak boleh mengubah catatan lama.
