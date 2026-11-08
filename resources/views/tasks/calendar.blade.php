@@ -54,10 +54,10 @@
         </strong>
 
         <a
-            href="{{ route('tasks.calendar', [
+            href="{{ route('tasks.calendar', array_merge([
                 'month' => $nextMonth->month,
                 'year' => $nextMonth->year
-            ]) }}"
+            ], request()->only(['space_id', 'list_id']))) }}"
             class="icon-btn"
         >
             ›
