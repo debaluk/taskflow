@@ -1275,15 +1275,19 @@ class TaskManagerController extends Controller
             'return_url' => ['nullable', 'string', 'max:2048'],
         ]);
 
-
-        DB::transaction(function () use ($task) {
-            $this->softDeleteTaskTree($task);
-        });
-
         $returnUrl = $this->safeReturnUrl(
             $request->input('return_url'),
             route('tasks.index')
         );
+
+        if ($task->subtasks()->exists()) {
+            return redirect($returnUrl)->with(
+                'error',
+                'Task tidak dapat dihapus karena masih memiliki Subtask. Hapus atau pindahkan Subtask terlebih dahulu.'
+            );
+        }
+
+        $task->delete();
 
         return redirect($returnUrl)->with(
             'success',
