@@ -1337,7 +1337,7 @@ class TaskManagerController extends Controller
             ->where('parent_id', $task->id)
             ->max('position') + 1;
 
-        Task::create([
+        $subtask = Task::create([
             'uuid' => (string) Str::uuid(),
 
             'workspace_id' => $task->workspace_id,
@@ -1369,6 +1369,18 @@ class TaskManagerController extends Controller
         ]);
 
         $this->updateParentProgress($task);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Subtask berhasil dibuat.',
+                'subtask' => [
+                    'id' => $subtask->id,
+                    'title' => $subtask->title,
+                    'status' => $subtask->status,
+                ],
+            ], 201);
+        }
 
         $returnUrl = $this->safeReturnUrl(
             $data['return_url'] ?? null,
