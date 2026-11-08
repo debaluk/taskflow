@@ -446,10 +446,10 @@ class TaskAuthorizationTest extends TestCase
                 'return_url' => 'https://evil.example/phishing',
             ]))
             ->assertOk()
-            ->assertSee(route('tasks.index', [
+            ->assertSee(e(route('tasks.index', [
                 'space_id' => $space->id,
                 'list_id' => $list->id,
-            ]), false);
+            ])), false);
     }
 
     private function createSpace(): array
