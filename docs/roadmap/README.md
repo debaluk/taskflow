@@ -383,6 +383,10 @@ Fase 1 dinyatakan selesai jika:
 - Reply/thread dan mention ditunda ke Fase 3.
 - Regression test untuk izin dan penyimpanan komentar dipertahankan; perubahan tidak boleh mengubah catatan lama.
 
+
+- **Keputusan dan koreksi perilaku penghapusan Task induk (8 November 2026):** penghapusan Task induk kini ditolak selama masih memiliki Subtask aktif. Pengguna menerima pesan agar Subtask dihapus atau dipindahkan terlebih dahulu; Task induk dan seluruh turunannya tetap utuh. Task tanpa Subtask tetap dapat dihapus. Penghapusan Subtask secara langsung tetap menggunakan soft-delete rekursif agar keturunan Subtask tidak tertinggal.
+- **Regression test:** `TaskAuthorizationTest::test_parent_task_cannot_be_deleted_while_active_subtasks_exist()` memastikan parent, child, dan grandchild tetap aktif setelah penghapusan parent ditolak. Test `test_task_creator_can_delete_own_task()` tetap memastikan Task tanpa Subtask dapat dihapus.
+
 ### Perbaikan F2 — Tambah Subtask dari halaman Detail
 
 - Temuan: halaman Detail menampilkan daftar Subtask tetapi tidak menyediakan form tambah langsung. Tombol Aksi cepat membuka modal lama, sementara endpoint storeSubtask selalu mengembalikan redirect meskipun dipanggil melalui fetch yang mengharapkan JSON.
