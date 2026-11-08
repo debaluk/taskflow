@@ -408,6 +408,25 @@ class TaskAuthorizationTest extends TestCase
             ->assertSee(e($origin), false);
     }
 
+    public function test_task_detail_uses_validated_referer_without_return_url_query(): void
+    {
+        [$owner, $space, $list] = $this->createSpace();
+        $task = $this->createTask($space, $list, $owner);
+        $origin = route('tasks.board', [
+            'space_id' => $space->id,
+            'list_id' => $list->id,
+        ]);
+        $detailUrl = route('tasks.show', $task);
+
+        $this->actingAs($owner)
+            ->withHeader('referer', $origin)
+            ->get($detailUrl)
+            ->assertOk()
+            ->assertViewIs('tasks.show')
+            ->assertViewHas('returnUrl', $origin)
+            ->assertDontSee('return_url=', false);
+    }
+
     public function test_task_update_redirects_to_validated_origin_url(): void
     {
         [$owner, $space, $list] = $this->createSpace();
