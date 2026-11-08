@@ -514,7 +514,7 @@ $taskModalData = function ($task) {
 
                 <div
                     class="task-row"
-                    onclick="openTaskModal(@js($taskModalData($task)))"
+                    onclick="openTaskDetail({{ $task->id }})"
                 >
 
                     <span class="task-name">
