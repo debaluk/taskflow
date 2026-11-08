@@ -373,6 +373,22 @@ Fase 1 dinyatakan selesai jika:
 
 **Kriteria fase:** pengguna dapat menemukan, memahami, memperbarui, dan memantau Task tanpa alur yang membingungkan.
 
+### F2-02 — Komentar Task (penyempurnaan catatan)
+
+- **Status: In Progress (8 November 2026).**
+- Gunakan tabel activities dan action task_note yang sudah ada; tidak membuat tabel komentar baru.
+- Rapikan istilah UI dari Catatan menjadi Komentar Task; komentar bersifat append-only, kronologis, menampilkan penulis dan waktu.
+- Hak tambah komentar mengikuti aturan Owner, pembuat Task, dan assignee; tidak tersedia edit/hapus komentar.
+- Reply/thread dan mention ditunda ke Fase 3.
+- Regression test untuk izin dan penyimpanan komentar dipertahankan; perubahan tidak boleh mengubah catatan lama.
+
+### Perbaikan F2 — Tambah Subtask dari halaman Detail
+
+- Temuan: halaman Detail menampilkan daftar Subtask tetapi tidak menyediakan form tambah langsung. Tombol Aksi cepat membuka modal lama, sementara endpoint storeSubtask selalu mengembalikan redirect meskipun dipanggil melalui fetch yang mengharapkan JSON.
+- Koreksi: sediakan form tambah Subtask langsung di halaman Detail untuk Owner/pembuat; endpoint mengembalikan JSON 201 untuk request JSON dan tetap mempertahankan redirect untuk form biasa.
+- Setelah berhasil, halaman Detail dimuat ulang sehingga Subtask baru dan progres parent terlihat tanpa kehilangan konteks halaman asal.
+- Hak akses backend tetap memakai authorizeTaskManagement; regression test memastikan pembuatan Subtask via JSON.
+
 # 6. Fase 3 — Collaboration & Notification
 
 **Tujuan:** membuat perubahan dan tanggung jawab pekerjaan dapat diketahui oleh orang yang tepat.
