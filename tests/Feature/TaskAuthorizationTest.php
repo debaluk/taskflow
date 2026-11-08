@@ -189,7 +189,7 @@ class TaskAuthorizationTest extends TestCase
         $task = $this->createTask($space, $list, $creator);
 
         $this->actingAs($member)
-            ->getJson(route('tasks.show', $task))
+            ->getJson(route('tasks.data', $task))
             ->assertOk()
             ->assertJsonPath('permissions.manage', false)
             ->assertJsonPath('permissions.update_status', false)
@@ -303,7 +303,7 @@ class TaskAuthorizationTest extends TestCase
         $task = $this->createTask($space, $list, $creator);
 
         $this->actingAs($outsider)
-            ->getJson(route('tasks.show', $task))
+            ->getJson(route('tasks.data', $task))
             ->assertForbidden();
 
         $this->actingAs($outsider)
