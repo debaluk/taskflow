@@ -40,10 +40,10 @@
     <div class="calendar-head">
 
         <a
-            href="{{ route('tasks.calendar', [
+            href="{{ route('tasks.calendar', array_merge([
                 'month' => $previousMonth->month,
                 'year' => $previousMonth->year
-            ]) }}"
+            ], request()->only(['space_id', 'list_id']))) }}"
             class="icon-btn"
         >
             ‹
