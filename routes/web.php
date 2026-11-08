@@ -218,6 +218,8 @@ Route::middleware('auth')->group(function () {
 
 
 	// TASK DETAIL
+	Route::get('/tasks/{task}/data', [TaskManagerController::class, 'detailData'])
+		->name('tasks.data');
 	Route::get('/tasks/{task}', [TaskManagerController::class, 'show'])
 		->name('tasks.show');
 
