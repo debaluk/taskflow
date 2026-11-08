@@ -740,7 +740,8 @@ class TaskManagerController extends Controller
             ->where('subject_type', Task::class)
             ->where('subject_id', $task->id)
             ->where('action', 'task_note')
-            ->latest()
+            ->orderBy('created_at')
+            ->orderBy('id')
             ->get();
 
         $fallbackUrl = route('tasks.index', [
@@ -788,7 +789,8 @@ class TaskManagerController extends Controller
             ->where('subject_type', Task::class)
             ->where('subject_id', $task->id)
             ->where('action', 'task_note')
-            ->latest()
+            ->orderBy('created_at')
+            ->orderBy('id')
             ->get()
             ->map(function (Activity $activity) {
                 return [
