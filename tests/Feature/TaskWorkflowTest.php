@@ -57,6 +57,29 @@ class TaskWorkflowTest extends TestCase
         $this->assertSoftDeleted('tasks', ['id' => $subtask->id]);
     }
 
+    public function test_task_detail_can_create_subtask_with_json_response(): void
+    {
+        [$owner, $space, $list, $creator] = $this->createSpaceWithMember();
+        $parent = $this->createTask($space, $list, $creator, 'Task induk');
+
+        $response = $this->actingAs($creator)
+            ->postJson(route('tasks.subtasks.store', $parent), [
+                'title' => 'Subtask dari halaman detail',
+                'description' => 'Rincian',
+                'status' => 'open',
+                'priority' => 'normal',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('subtask.title', 'Subtask dari halaman detail');
+
+        $this->assertDatabaseHas('tasks', [
+            'id' => $response->json('subtask.id'),
+            'parent_id' => $parent->id,
+            'title' => 'Subtask dari halaman detail',
+        ]);
+    }
+
     public function test_deleting_subtask_soft_deletes_all_nested_subtasks_and_keeps_parent(): void
     {
         [$owner, $space, $list, $creator] = $this->createSpaceWithMember();
