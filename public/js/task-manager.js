@@ -8,10 +8,40 @@ function openTaskDetail(taskId) {
     if (!taskId) return;
 
     const returnUrl = window.location.href;
+
+    try {
+        sessionStorage.setItem('taskflow_return_context', JSON.stringify({
+            url: returnUrl,
+            scrollY: window.scrollY,
+        }));
+    } catch (error) {
+        console.warn('Konteks posisi halaman tidak dapat disimpan.', error);
+    }
+
     const detailUrl = new URL(appPath(`tasks/${taskId}`), window.location.origin);
     detailUrl.searchParams.set('return_url', returnUrl);
     window.location.assign(detailUrl.toString());
 }
+
+window.addEventListener('load', () => {
+    try {
+        const rawContext = sessionStorage.getItem('taskflow_return_context');
+        if (!rawContext) return;
+
+        const context = JSON.parse(rawContext);
+        if (context.url !== window.location.href) return;
+
+        sessionStorage.removeItem('taskflow_return_context');
+
+        const scrollY = Number(context.scrollY);
+        if (Number.isFinite(scrollY) && scrollY >= 0) {
+            requestAnimationFrame(() => window.scrollTo(0, scrollY));
+        }
+    } catch (error) {
+        sessionStorage.removeItem('taskflow_return_context');
+        console.warn('Konteks posisi halaman tidak dapat dipulihkan.', error);
+    }
+});
 
 function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('open');
