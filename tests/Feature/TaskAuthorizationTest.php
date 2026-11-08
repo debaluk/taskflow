@@ -265,7 +265,7 @@ class TaskAuthorizationTest extends TestCase
         ]);
     }
 
-    public function test_deleting_parent_task_soft_deletes_all_nested_subtasks(): void
+    public function test_parent_task_cannot_be_deleted_while_active_subtasks_exist(): void
     {
         [$owner, $space, $list] = $this->createSpace();
         $creator = User::factory()->create();
@@ -283,11 +283,15 @@ class TaskAuthorizationTest extends TestCase
 
         $this->actingAs($creator)
             ->delete(route('tasks.destroy', $parent))
-            ->assertRedirect();
+            ->assertRedirect()
+            ->assertSessionHas(
+                'error',
+                'Task tidak dapat dihapus karena masih memiliki Subtask. Hapus atau pindahkan Subtask terlebih dahulu.'
+            );
 
-        $this->assertSoftDeleted('tasks', ['id' => $parent->id]);
-        $this->assertSoftDeleted('tasks', ['id' => $child->id]);
-        $this->assertSoftDeleted('tasks', ['id' => $grandchild->id]);
+        $this->assertNotSoftDeleted('tasks', ['id' => $parent->id]);
+        $this->assertNotSoftDeleted('tasks', ['id' => $child->id]);
+        $this->assertNotSoftDeleted('tasks', ['id' => $grandchild->id]);
     }
 
     public function test_unrelated_user_cannot_view_or_change_task(): void
