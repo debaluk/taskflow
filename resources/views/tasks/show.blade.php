@@ -134,10 +134,37 @@
         @empty
             <p class="text-muted">Belum ada subtask.</p>
         @endforelse
+
+        @if($permissions['manage'])
+            <form id="taskDetailSubtaskForm" style="display:grid;gap:10px;margin-top:16px;max-width:640px;">
+                <label for="taskDetailSubtaskTitle">Tambah Subtask</label>
+                <input id="taskDetailSubtaskTitle" name="title" type="text" maxlength="255" required placeholder="Judul Subtask">
+                <textarea name="description" rows="2" placeholder="Deskripsi (opsional)"></textarea>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;">
+                    <select name="status" aria-label="Status Subtask">
+                        <option value="open">To Do</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="review">Review</option>
+                        <option value="done">Done</option>
+                    </select>
+                    <select name="priority" aria-label="Prioritas Subtask">
+                        <option value="low">Low</option>
+                        <option value="normal" selected>Normal</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
+                    </select>
+                    <input name="due_date" type="date" aria-label="Jatuh tempo Subtask">
+                </div>
+                <div style="display:flex;justify-content:flex-end;">
+                    <button class="btn primary" type="submit">Tambah Subtask</button>
+                </div>
+                <p id="taskDetailSubtaskError" class="text-danger" role="alert" hidden></p>
+            </form>
+        @endif
     </div>
 
     <section style="margin-top:28px;">
-        <h3>Catatan Task</h3>
+        <h3>Komentar Task</h3>
         <div id="taskDetailNotes" style="display:grid;gap:12px;margin:14px 0;">
             @forelse($notes as $note)
                 <article style="padding:12px;background:var(--surface-muted,#f8fafc);border-radius:8px;">
@@ -153,9 +180,9 @@
         </div>
         @if($permissions['add_note'])
             <form id="taskDetailNoteForm" style="display:grid;gap:10px;">
-                <textarea name="note" rows="3" maxlength="5000" required placeholder="Tulis perkembangan atau catatan pekerjaan..."></textarea>
+                <textarea name="note" rows="3" maxlength="5000" required placeholder="Tulis komentar atau perkembangan pekerjaan..."></textarea>
                 <div style="display:flex;justify-content:flex-end;">
-                    <button class="btn primary" type="submit">Kirim catatan</button>
+                    <button class="btn primary" type="submit">Kirim komentar</button>
                 </div>
             </form>
         @endif
@@ -180,6 +207,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             window.location.reload();
+        });
+    }
+
+    const subtaskForm = document.getElementById('taskDetailSubtaskForm');
+    if (subtaskForm) {
+        subtaskForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const error = document.getElementById('taskDetailSubtaskError');
+            const submit = subtaskForm.querySelector('button[type="submit"]');
+            error.hidden = true;
+            submit.disabled = true;
+
+            const payload = Object.fromEntries(new FormData(subtaskForm).entries());
+            try {
+                const response = await fetch(@json(route('tasks.subtasks.store', $task)), {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf},
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    const messages = data.errors ? Object.values(data.errors).flat().join(' ') : data.message;
+                    throw new Error(messages || 'Gagal menambahkan Subtask.');
+                }
+                window.location.reload();
+            } catch (exception) {
+                error.textContent = exception.message || 'Gagal menambahkan Subtask.';
+                error.hidden = false;
+            } finally {
+                submit.disabled = false;
+            }
         });
     }
 
