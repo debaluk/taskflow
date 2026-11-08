@@ -344,17 +344,24 @@ Fase 1 dinyatakan selesai jika:
 
 ### F2-01 — Halaman Detail Task dan konteks navigasi
 
-- **Status: In Progress (8 November 2026).**
+- **Status: Testing (8 November 2026).**
 - Audit awal menemukan detail Task masih berupa modal bersama form pembuatan Task; endpoint `GET /tasks/{task}` saat ini mengembalikan JSON.
 - Arah implementasi: halaman Detail Task khusus; modal dipertahankan untuk pembuatan Task dan tindakan cepat.
 - Seluruh entry point Task (Dashboard/List, halaman List, Board, Calendar, Workspace, dan Gantt bila tersedia) harus membuka halaman Detail khusus.
-- Konteks halaman asal harus dipertahankan, termasuk query parameter Space/List, filter, dan periode Calendar/Gantt.
+- Konteks halaman asal harus dipertahankan, termasuk query parameter Space/List, filter, periode Calendar/Gantt, dan posisi scroll sebelum membuka Detail.
 - Tombol Kembali dan redirect setelah simpan/update harus kembali ke URL asal yang tervalidasi backend; jika tidak ada konteks asal, gunakan fallback aman yang relevan.
 - Endpoint data JSON dipisahkan dari endpoint halaman HTML agar pengambilan detail melalui AJAX tidak rusak.
 - Hak akses Owner/creator/assignee tetap mengikuti aturan F1-02; UI bukan pengganti otorisasi backend.
 - **Kriteria penerimaan:** pengguna dapat membuka Detail dari seluruh entry point, melihat konteks Task, kembali ke halaman asal, dan setelah update kembali ke halaman serta parameter yang sama; direct access memiliki fallback; URL eksternal ditolak; regression test mencakup route, akses, dan redirect.
 - **Area audit:** `routes/web.php`, `TaskManagerController`, `public/js/task-manager.js`, layout dan seluruh view yang membuka Task, serta feature tests.
-- Belum ada perubahan kode pada saat backlog ini dicatat.
+- **Implementasi awal:** route `tasks.show` kini merender halaman HTML; endpoint JSON dipisahkan menjadi `tasks.data`. Halaman Detail menampilkan deskripsi, status, prioritas, tanggal, pembuat, assignee, Subtask, dan catatan; Owner/creator dapat mengubah detail, assignee tetap hanya dapat mengubah status dan menambah catatan sesuai F1-02.
+- Entry point Task pada Dashboard/List, halaman List, Board, Calendar, Workspace, dan Gantt diarahkan ke halaman Detail.
+- URL asal divalidasi dengan `safeReturnUrl()`; fallback direct access menuju List Task yang sesuai. Posisi scroll disimpan sementara pada sessionStorage dan dipulihkan saat kembali ke URL asal.
+- Periode Gantt sekarang ikut dibawa melalui query `month` dan `year`; navigasi bulan mempertahankan Space/List. Navigasi bulan Calendar juga mempertahankan parameter Space/List.
+- Regression test mencakup route JSON, akses halaman Detail, URL asal aman, redirect setelah update, fallback direct access, dan periode/navigasi Gantt.
+- **Hasil CI:** run `42444559951` berstatus **success**: **69 test passed (301 assertions)**; `node --check public/js/task-manager.js` juga sukses. Commit source terakhir: `5db7b85`.
+- Status tetap **Testing** sampai alur navigasi dan posisi scroll diperiksa pada browser; belum ada deployment ke VPS.
+
 
 - [ ] Penyempurnaan halaman/detail Task sebagai pusat konteks pekerjaan.
 - [ ] Komentar dan percakapan yang melekat pada Task.
