@@ -73,6 +73,10 @@
         );
     }
 
+    if (request()->routeIs('tasks.show') && isset($task) && $task) {
+        $currentSpace = $sidebarSpaces->firstWhere('id', $task->space_id);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | CURRENT LIST
@@ -98,6 +102,10 @@
             'id',
             $taskList->id
         );
+    }
+
+    if (request()->routeIs('tasks.show') && isset($task) && $task) {
+        $currentList = $allSidebarLists->firstWhere('id', $task->list_id);
     }
 
     /*
