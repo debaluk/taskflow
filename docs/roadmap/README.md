@@ -342,6 +342,20 @@ Fase 1 dinyatakan selesai jika:
 
 **Tujuan:** membuat pengelolaan satu pekerjaan terasa lengkap dan efisien.
 
+### F2-01 — Halaman Detail Task dan konteks navigasi
+
+- **Status: In Progress (8 November 2026).**
+- Audit awal menemukan detail Task masih berupa modal bersama form pembuatan Task; endpoint `GET /tasks/{task}` saat ini mengembalikan JSON.
+- Arah implementasi: halaman Detail Task khusus; modal dipertahankan untuk pembuatan Task dan tindakan cepat.
+- Seluruh entry point Task (Dashboard/List, halaman List, Board, Calendar, Workspace, dan Gantt bila tersedia) harus membuka halaman Detail khusus.
+- Konteks halaman asal harus dipertahankan, termasuk query parameter Space/List, filter, dan periode Calendar/Gantt.
+- Tombol Kembali dan redirect setelah simpan/update harus kembali ke URL asal yang tervalidasi backend; jika tidak ada konteks asal, gunakan fallback aman yang relevan.
+- Endpoint data JSON dipisahkan dari endpoint halaman HTML agar pengambilan detail melalui AJAX tidak rusak.
+- Hak akses Owner/creator/assignee tetap mengikuti aturan F1-02; UI bukan pengganti otorisasi backend.
+- **Kriteria penerimaan:** pengguna dapat membuka Detail dari seluruh entry point, melihat konteks Task, kembali ke halaman asal, dan setelah update kembali ke halaman serta parameter yang sama; direct access memiliki fallback; URL eksternal ditolak; regression test mencakup route, akses, dan redirect.
+- **Area audit:** `routes/web.php`, `TaskManagerController`, `public/js/task-manager.js`, layout dan seluruh view yang membuka Task, serta feature tests.
+- Belum ada perubahan kode pada saat backlog ini dicatat.
+
 - [ ] Penyempurnaan halaman/detail Task sebagai pusat konteks pekerjaan.
 - [ ] Komentar dan percakapan yang melekat pada Task.
 - [ ] Pencarian Task lintas ruang kerja yang diizinkan.
