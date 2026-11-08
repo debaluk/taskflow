@@ -1277,7 +1277,7 @@ class TaskManagerController extends Controller
         while ($frontier->isNotEmpty()) {
             $children = Task::withTrashed()
                 ->whereIn('parent_id', $frontier)
-                ->whereNotIn('id', $descendantIds->push((int) $task->id))
+                ->whereNotIn('id', $descendantIds->merge([(int) $task->id]))
                 ->pluck('id')
                 ->map(fn ($id) => (int) $id);
 
