@@ -4,6 +4,15 @@ function appPath(path) {
     return `${APP_BASE_PATH}/${String(path).replace(/^\/+/, '')}`;
 }
 
+function openTaskDetail(taskId) {
+    if (!taskId) return;
+
+    const returnUrl = window.location.href;
+    const detailUrl = new URL(appPath(`tasks/${taskId}`), window.location.origin);
+    detailUrl.searchParams.set('return_url', returnUrl);
+    window.location.assign(detailUrl.toString());
+}
+
 function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('open');
 }
@@ -97,7 +106,7 @@ async function openTaskModal(task = 'New Task') {
     try {
 
         const response = await fetch(
-            appPath('tasks/' + taskId),
+            appPath('tasks/' + taskId + '/data'),
             {
                 headers: {
                     'Accept': 'application/json'
