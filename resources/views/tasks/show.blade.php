@@ -68,9 +68,19 @@
                 </div>
             </div>
             @error('due_date') <small class="text-danger">{{ $message }}</small> @enderror
-            <div style="display:flex;justify-content:flex-end;">
+            <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                <button
+                    type="button"
+                    class="btn danger"
+                    onclick="if (confirm('Hapus Task ini beserta seluruh Subtask?')) document.getElementById('deleteTaskForm').submit()"
+                >Hapus Task</button>
                 <button type="submit" class="btn primary">Simpan perubahan</button>
             </div>
+        </form>
+        <form id="deleteTaskForm" method="POST" action="{{ route('tasks.destroy', $task) }}" style="display:none;">
+            @csrf
+            @method('DELETE')
+            <input type="hidden" name="return_url" value="{{ $returnUrl }}">
         </form>
     @else
         <div style="display:grid;gap:16px;">
