@@ -1727,7 +1727,7 @@ class TaskManagerController extends Controller
         $month = (int) ($filters['month'] ?? session('gantt_month', now()->month));
         $year = (int) ($filters['year'] ?? session('gantt_year', now()->year));
 
-        $date = \\Carbon\\Carbon::create($year, $month, 1);
+        $date = \Carbon\Carbon::create($year, $month, 1);
 
         $workspace = $this->currentWorkspace();
 
@@ -1770,7 +1770,7 @@ class TaskManagerController extends Controller
             'list_id' => ['nullable', 'integer'],
         ]);
 
-        $date = \\Carbon\\Carbon::create(
+        $date = \Carbon\Carbon::create(
             (int) ($filters['year'] ?? session('gantt_year', now()->year)),
             (int) ($filters['month'] ?? session('gantt_month', now()->month)),
             1
@@ -1793,7 +1793,7 @@ class TaskManagerController extends Controller
             'list_id' => ['nullable', 'integer'],
         ]);
 
-        $date = \\Carbon\\Carbon::create(
+        $date = \Carbon\Carbon::create(
             (int) ($filters['year'] ?? session('gantt_year', now()->year)),
             (int) ($filters['month'] ?? session('gantt_month', now()->month)),
             1
