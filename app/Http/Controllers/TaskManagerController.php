@@ -1265,6 +1265,36 @@ class TaskManagerController extends Controller
     // DELETE TASK
     // =========================================================
 
+    /**
+     * Periksa seluruh keturunan Task, termasuk yang berada di bawah
+     * Subtask yang sudah soft-deleted, untuk mencegah Task aktif tertinggal.
+     */
+    private function hasActiveSubtasks(Task $task): bool
+    {
+        $frontier = collect([(int) $task->id]);
+        $descendantIds = collect();
+
+        while ($frontier->isNotEmpty()) {
+            $children = Task::withTrashed()
+                ->whereIn('parent_id', $frontier)
+                ->whereNotIn('id', $descendantIds->push((int) $task->id))
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id);
+
+            if ($children->isEmpty()) {
+                break;
+            }
+
+            $descendantIds = $descendantIds->merge($children);
+            $frontier = $children;
+        }
+
+        return Task::withTrashed()
+            ->whereIn('id', $descendantIds)
+            ->whereNull('deleted_at')
+            ->exists();
+    }
+
     public function destroy(
         Request $request,
         Task $task
@@ -1280,7 +1310,7 @@ class TaskManagerController extends Controller
             route('tasks.index')
         );
 
-        if ($task->subtasks()->exists()) {
+        if ($this->hasActiveSubtasks($task)) {
             return redirect($returnUrl)->with(
                 'error',
                 'Task tidak dapat dihapus karena masih memiliki Subtask. Hapus atau pindahkan Subtask terlebih dahulu.'
