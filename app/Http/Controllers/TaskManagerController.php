@@ -726,8 +726,6 @@ class TaskManagerController extends Controller
             'parent',
             'subtasks.assignees',
             'assignees',
-            'dependencies.dependsOnTask',
-            'dependedOnBy.task',
         ]);
 
         $canManage = $task->space->isOwnedBy((int) auth()->id()) ||
