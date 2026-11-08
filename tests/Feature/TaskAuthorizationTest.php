@@ -307,6 +307,10 @@ class TaskAuthorizationTest extends TestCase
             ->assertForbidden();
 
         $this->actingAs($outsider)
+            ->get(route('tasks.show', $task))
+            ->assertForbidden();
+
+        $this->actingAs($outsider)
             ->patchJson(route('tasks.status', $task), [
                 'status' => 'done',
             ])
@@ -351,6 +355,37 @@ class TaskAuthorizationTest extends TestCase
             'task_id' => $task->id,
             'user_id' => $member->id,
         ]);
+    }
+
+    public function test_gantt_period_is_preserved_in_url_and_navigation(): void
+    {
+        [$owner, $space, $list] = $this->createSpace();
+
+        $this->actingAs($owner)
+            ->get(route('tasks.gantt', [
+                'month' => 5,
+                'year' => 2027,
+                'space_id' => $space->id,
+                'list_id' => $list->id,
+            ]))
+            ->assertOk()
+            ->assertViewHas('date', function ($date) {
+                return $date->format('Y-m') === '2027-05';
+            });
+
+        $this->actingAs($owner)
+            ->get(route('tasks.gantt.next', [
+                'month' => 5,
+                'year' => 2027,
+                'space_id' => $space->id,
+                'list_id' => $list->id,
+            ]))
+            ->assertRedirect(route('tasks.gantt', [
+                'month' => 6,
+                'year' => 2027,
+                'space_id' => $space->id,
+                'list_id' => $list->id,
+            ]));
     }
 
     public function test_task_detail_page_preserves_safe_origin_url(): void
