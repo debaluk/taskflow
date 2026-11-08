@@ -82,7 +82,10 @@
 
 
         <a
-            href="{{ route('tasks.gantt.next') }}"
+            href="{{ route('tasks.gantt.next', array_merge([
+                'month' => $date->month,
+                'year' => $date->year
+            ], request()->only(['space_id', 'list_id']))) }}"
             class="btn"
         >
             ›
