@@ -61,7 +61,7 @@ class TaskAuthorizationTest extends TestCase
         $task->assignees()->attach($assignee->id);
 
         $this->actingAs($assignee)
-            ->getJson(route('tasks.show', $task))
+            ->getJson(route('tasks.data', $task))
             ->assertOk()
             ->assertJsonPath('permissions.manage', false)
             ->assertJsonPath('permissions.update_status', true)
@@ -351,6 +351,70 @@ class TaskAuthorizationTest extends TestCase
             'task_id' => $task->id,
             'user_id' => $member->id,
         ]);
+    }
+
+    public function test_task_detail_page_preserves_safe_origin_url(): void
+    {
+        [$owner, $space, $list] = $this->createSpace();
+        $task = $this->createTask($space, $list, $owner);
+        $origin = route('tasks.board', [
+            'space_id' => $space->id,
+            'list_id' => $list->id,
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('tasks.show', [
+                'task' => $task->id,
+                'return_url' => $origin,
+            ]))
+            ->assertOk()
+            ->assertViewIs('tasks.show')
+            ->assertSee('Task test')
+            ->assertSee(e($origin), false);
+    }
+
+    public function test_task_update_redirects_to_validated_origin_url(): void
+    {
+        [$owner, $space, $list] = $this->createSpace();
+        $task = $this->createTask($space, $list, $owner);
+        $origin = route('tasks.calendar', [
+            'month' => 4,
+            'year' => 2027,
+            'space_id' => $space->id,
+            'list_id' => $list->id,
+        ]);
+
+        $this->actingAs($owner)
+            ->put(route('tasks.update', $task), [
+                'title' => 'Task diperbarui',
+                'description' => 'Deskripsi baru',
+                'status' => 'in_progress',
+                'priority' => 'high',
+                'return_url' => $origin,
+            ])
+            ->assertRedirect($origin);
+
+        $this->assertDatabaseHas('tasks', [
+            'id' => $task->id,
+            'title' => 'Task diperbarui',
+        ]);
+    }
+
+    public function test_task_detail_page_rejects_external_origin_and_uses_task_list_fallback(): void
+    {
+        [$owner, $space, $list] = $this->createSpace();
+        $task = $this->createTask($space, $list, $owner);
+
+        $this->actingAs($owner)
+            ->get(route('tasks.show', [
+                'task' => $task->id,
+                'return_url' => 'https://evil.example/phishing',
+            ]))
+            ->assertOk()
+            ->assertSee(route('tasks.index', [
+                'space_id' => $space->id,
+                'list_id' => $list->id,
+            ]), false);
     }
 
     private function createSpace(): array
