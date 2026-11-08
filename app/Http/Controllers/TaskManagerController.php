@@ -1719,41 +1719,22 @@ class TaskManagerController extends Controller
 
     public function gantt(Request $request)
     {
-        $month = session(
-            'gantt_month',
-            now()->month
-        );
+        $filters = $request->validate([
+            'month' => ['nullable', 'integer', 'between:1,12'],
+            'year' => ['nullable', 'integer', 'between:1,9999'],
+        ]);
 
-        $year = session(
-            'gantt_year',
-            now()->year
-        );
+        $month = (int) ($filters['month'] ?? session('gantt_month', now()->month));
+        $year = (int) ($filters['year'] ?? session('gantt_year', now()->year));
 
-        $date = \Carbon\Carbon::create(
-            $year,
-            $month,
-            1
-        );
+        $date = \\Carbon\\Carbon::create($year, $month, 1);
 
         $workspace = $this->currentWorkspace();
 
-        $space = $this->resolveSpace(
-            $request,
-            $workspace
-        );
+        $space = $this->resolveSpace($request, $workspace);
+        $taskList = $this->resolveTaskList($request, $workspace, $space);
 
-        $taskList = $this->resolveTaskList(
-            $request,
-            $workspace,
-            $space
-        );
-
-        $tasks = $this->scopedTasksQuery(
-            $request,
-            $workspace,
-            $space,
-            $taskList
-        )
+        $tasks = $this->scopedTasksQuery($request, $workspace, $space, $taskList)
             ->with([
                 'subtasks',
                 'assignees',
@@ -1765,18 +1746,15 @@ class TaskManagerController extends Controller
             ->orderBy('id')
             ->get();
 
-        return view(
-            'tasks.gantt',
-            compact(
-                'tasks',
-                'date',
-                'month',
-                'year',
-                'workspace',
-                'space',
-                'taskList'
-            )
-        );
+        return view('tasks.gantt', compact(
+            'tasks',
+            'date',
+            'month',
+            'year',
+            'workspace',
+            'space',
+            'taskList'
+        ));
     }
 
     // =========================================================
@@ -1785,46 +1763,48 @@ class TaskManagerController extends Controller
 
     public function ganttPrevious(Request $request)
     {
-        $date = \Carbon\Carbon::create(
-            session('gantt_year', now()->year),
-            session('gantt_month', now()->month),
+        $filters = $request->validate([
+            'month' => ['nullable', 'integer', 'between:1,12'],
+            'year' => ['nullable', 'integer', 'between:1,9999'],
+            'space_id' => ['nullable', 'integer'],
+            'list_id' => ['nullable', 'integer'],
+        ]);
+
+        $date = \\Carbon\\Carbon::create(
+            (int) ($filters['year'] ?? session('gantt_year', now()->year)),
+            (int) ($filters['month'] ?? session('gantt_month', now()->month)),
             1
         )->subMonth();
 
-        session([
-            'gantt_month' => $date->month,
-            'gantt_year' => $date->year,
+        return redirect()->route('tasks.gantt', [
+            'month' => $date->month,
+            'year' => $date->year,
+            'space_id' => $filters['space_id'] ?? null,
+            'list_id' => $filters['list_id'] ?? null,
         ]);
-
-        return redirect()->route(
-            'tasks.gantt',
-            $request->only([
-                'space_id',
-                'list_id',
-            ])
-        );
     }
 
     public function ganttNext(Request $request)
     {
-        $date = \Carbon\Carbon::create(
-            session('gantt_year', now()->year),
-            session('gantt_month', now()->month),
+        $filters = $request->validate([
+            'month' => ['nullable', 'integer', 'between:1,12'],
+            'year' => ['nullable', 'integer', 'between:1,9999'],
+            'space_id' => ['nullable', 'integer'],
+            'list_id' => ['nullable', 'integer'],
+        ]);
+
+        $date = \\Carbon\\Carbon::create(
+            (int) ($filters['year'] ?? session('gantt_year', now()->year)),
+            (int) ($filters['month'] ?? session('gantt_month', now()->month)),
             1
         )->addMonth();
 
-        session([
-            'gantt_month' => $date->month,
-            'gantt_year' => $date->year,
+        return redirect()->route('tasks.gantt', [
+            'month' => $date->month,
+            'year' => $date->year,
+            'space_id' => $filters['space_id'] ?? null,
+            'list_id' => $filters['list_id'] ?? null,
         ]);
-
-        return redirect()->route(
-            'tasks.gantt',
-            $request->only([
-                'space_id',
-                'list_id',
-            ])
-        );
     }
 
     // =========================================================
