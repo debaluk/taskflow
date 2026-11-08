@@ -111,7 +111,7 @@
 
                     <div
                         class="calendar-task status-{{ str_replace('_', '-', $task->status) }}"
-                        onclick='openTaskModal(@json($task))'
+                        onclick="openTaskDetail({{ $task->id }})"
                     >
                         {{ $task->title }}
                     </div>
