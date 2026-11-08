@@ -126,8 +126,10 @@
                 class="gantt-task"
                 style="
                     padding-left:{{ $task->parent_id ? 32 : 14 }}px;
+                    cursor:pointer;
                 "
                 data-task-id="{{ $task->id }}"
+                onclick="openTaskDetail({{ $task->id }})"
             >
                 {{ $task->title }}
             </div>
