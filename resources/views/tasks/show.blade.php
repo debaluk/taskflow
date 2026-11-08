@@ -77,7 +77,7 @@
                 <button
                     type="button"
                     class="btn danger"
-                    onclick="if (confirm('Hapus Task ini beserta seluruh Subtask?')) document.getElementById('deleteTaskForm').submit()"
+                    onclick="if (confirm('Hapus Task ini?')) document.getElementById('deleteTaskForm').submit()"
                 >Hapus Task</button>
                 <button type="submit" class="btn primary">Simpan perubahan</button>
             </div>
