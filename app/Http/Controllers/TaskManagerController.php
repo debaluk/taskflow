@@ -749,7 +749,7 @@ class TaskManagerController extends Controller
             'list_id' => $task->list_id,
         ]);
         $returnUrl = $this->safeReturnUrl(
-            $request->query('return_url'),
+            $request->headers->get('referer') ?? $request->query('return_url'),
             $fallbackUrl
         );
 
