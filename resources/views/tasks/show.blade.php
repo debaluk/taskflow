@@ -13,7 +13,12 @@
             / {{ $task->taskList?->name ?? 'List' }}
         </p>
     </div>
-    <a class="btn ghost" href="{{ $returnUrl }}">← Kembali</a>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        @if($permissions['manage'])
+            <button type="button" class="btn" onclick="openTaskModal({id: {{ $task->id }}})">Aksi cepat / Subtask</button>
+        @endif
+        <a class="btn ghost" href="{{ $returnUrl }}">← Kembali</a>
+    </div>
 </div>
 
 <div class="panel" style="padding:24px;max-width:1000px;">
