@@ -147,8 +147,7 @@ Estimasi enam fase adalah kerangka perencanaan, bukan tenggat yang mengikat. Dur
     - Tabel/model `members` adalah relasi global `user_id` dengan `clickup_user_id` dan dipakai oleh `MemberController`; tabel ini tidak boleh dialihfungsikan menjadi pivot keanggotaan Space.
     - Route yang diperiksa belum menunjukkan endpoint untuk menambahkan note pada Task. Hak assignee untuk menambahkan note perlu menunggu audit/implementasi fitur note; jangan memberikan hak edit detail sebagai pengganti.
     - Dependency memanggil `authorizeTask()` pada kedua Task yang terhubung dan memeriksa keduanya berada di Space yang sama jika `space_id` terisi. Namun, karena `authorizeTask()` belum menerapkan akses Space/role, batas otorisasinya belum cukup.
-    - Reorder memvalidasi Task berada pada context Workspace/Space/List yang dikirim, tetapi belum memeriksa hak Owner/pembuat. Operasi ini harus mengikuti hak edit Task dan tidak boleh menjadi jalur perubahan status bagi assignee-only di luar aturan.
-  - **Implikasi dan urutan implementasi yang perlu dipertahankan:** mulai dari fondasi Owner dan relasi Space, lanjut pivot `space_members`, manajemen anggota Space, helper/policy otorisasi Task, lalu pengamanan Folder/List, Task, Subtask, Dependency, Assignment, dan Reorder. Tambahkan feature test untuk setiap kombinasi Owner, Member pembuat, Member assignee-only, serta user tanpa akses.
+    - Reorder memvalidasi Task berada pada context Workspace/Space/List yang dikirim, tetapi belum memeriksa hak Owner/pembuat. Operasi ini harus mengikuti hak edit Task dan tidak boleh menjadi jalur perubahan status bagi assignee-only di luar aturan.  - **Implikasi dan urutan implementasi yang perlu dipertahankan:** mulai dari fondasi Owner dan relasi Space, lanjut pivot `space_members`, manajemen anggota Space, helper/policy otorisasi Task, lalu pengamanan Folder/List, Task, Subtask, Dependency, Assignment, dan Reorder. Tambahkan feature test untuk setiap kombinasi Owner, Member pembuat, Member assignee-only, serta user tanpa akses.
   - **Catatan data:** sesuai keputusan sebelumnya, belum ada data Space lama yang perlu di-backfill. Space baru harus menyimpan Owner pembuatnya dan langsung mencatat Owner tersebut sebagai anggota awal pada `space_members`; tidak ada anggota lain yang ditambahkan otomatis. Workspace tetap ID 1.
   - **Implementasi fondasi Owner dan membership (8 November 2026):**
     - Menambahkan `owner_id` ke `Space::$fillable`, sehingga Owner yang dikirim `SpaceController::store()` sekarang dapat tersimpan melalui mass assignment.
@@ -297,8 +296,7 @@ Aturan tambahan:
   - Periksa relasi parent–subtask, assignee, dependency, dan struktur Workspace.
   - Tinjau perilaku penghapusan dan foreign key agar tidak meninggalkan data yatim.
   - Kriteria penerimaan: operasi perubahan/penghapusan menjaga integritas relasi.
-  - **Hasil audit (8 November 2026):** relasi `space_members`, `task_assignees`, `task_dependencies`, `parent_id`, Folder/List/Space, dan foreign key diperiksa. Unique pair dan FK cascade/restrict/null-on-delete sesuai kebutuhan; soft-delete mempertahankan record relasi agar data dapat dipulihkan, sementara penghapusan Task/Subtask melakukan cascade soft-delete seluruh keturunan. Penghapusan Folder/Space ditolak selama masih memiliki struktur/Task aktif; pengeluaran anggota membersihkan assignment dalam transaksi. Dependency cycle dan Folder hierarchy cycle telah dicegah dan diuji.
-  - **Status F1-06: Done (8 November 2026).** Regression test integritas struktur, penghapusan, assignment, dan hierarchy lulus pada CI terbaru run `42414568390` (**64 test passed, 285 assertions**).
+  - **Hasil audit (8 November 2026):** relasi `space_members`, `task_assignees`, `task_dependencies`, `parent_id`, Folder/List/Space, dan foreign key diperiksa. Unique pair dan FK cascade/restrict/null-on-delete sesuai kebutuhan; soft-delete mempertahankan record relasi agar data dapat dipulihkan, sementara penghapusan Task/Subtask melakukan cascade soft-delete seluruh keturunan. Penghapusan Folder/Space ditolak selama masih memiliki struktur/Task aktif; pengeluaran anggota membersihkan assignment dalam transaksi. Dependency cycle dan Folder hierarchy cycle telah dicegah dan diuji.  - **Status F1-06: Done (8 November 2026).** Regression test integritas struktur, penghapusan, assignment, dan hierarchy lulus pada CI terbaru run `42414568390` (**64 test passed, 285 assertions**).
 
 - [x] **F1-07 — Selaraskan dokumentasi dengan implementasi**
   - Perbarui README bila deskripsi fitur tidak sesuai dengan kondisi aktual.
@@ -307,13 +305,14 @@ Aturan tambahan:
   - **Koreksi dokumentasi (8 November 2026):** README diselaraskan dengan arsitektur Workspace ID 1 sebagai wadah internal, Owner/Member Space, direktori `members` global, sumber assignment `space_members`, status Folder, perilaku Subtask/progres, fitur Agenda/Inbox/Favorites placeholder, Activity yang belum merupakan audit trail lengkap, OAuth ClickUp berbasis session, dan import IPAS yang belum siap.
   - **Status F1-07: Done (8 November 2026).** README tidak lagi menyatakan fitur placeholder sebagai fitur operasional dan mengarahkan ke roadmap untuk status pengembangan.
 
-- [ ] **F1-08 — Verifikasi konfigurasi dan kesiapan rilis**
+- [x] **F1-08 — Verifikasi konfigurasi dan kesiapan rilis**
   - Periksa konfigurasi environment, session, logging, cache, dan penanganan error tanpa mengubah konfigurasi server di luar kebutuhan.
   - Pastikan langkah deploy dan rollback terdokumentasi.
   - Kriteria penerimaan: prosedur rilis dapat diikuti dan verifikasi pascadeploy jelas.
   - **Koreksi dokumentasi (8 November 2026):** `.env.example` ditambahkan tanpa kredensial/rahasia; file tersebut menyediakan nilai contoh untuk local setup dan memperbaiki ketergantungan script Composer yang mengharapkan file ini. `docs/deployment.md` ditambahkan berisi prasyarat, backup database, pull branch `main`, Composer install, migration, cache clear, verifikasi pascadeploy, serta batas aman rollback. Prosedur melarang `migrate:fresh`/`migrate:refresh` di produksi dan tidak meminta perubahan konfigurasi VPS.
-  - **Pemeriksaan source config:** default session/cache/queue menggunakan database; logging menggunakan stack/single; ClickUp credentials dibaca dari environment; production `APP_DEBUG=false` dan kredensial DB/session secure cookie tetap harus diverifikasi pada `.env` VPS, karena file produksi tidak dapat dibaca dari repository.
-  - **Status F1-08: In Progress.** Dokumen dan template selesai; menunggu verifikasi environment produksi yang disanitasi oleh operator. Jangan menampilkan nilai APP_KEY, password, token, atau secret.
+  - **Verifikasi runtime produksi (8 November 2026):** operator menjalankan pemeriksaan Tinker setelah memperbaiki `APP_ENV=production` dan `APP_DEBUG=false`. Hasil terverifikasi: APP_KEY terpasang, database MySQL, session/cache/queue menggunakan database, dan logging `stack`. `session_secure_cookie=null` dipertahankan karena URL produksi yang dikonfigurasi masih menggunakan HTTP; tidak dipaksakan menjadi secure cookie tanpa HTTPS.
+  - **Status F1-08: Done (8 November 2026).** Prosedur deployment/rollback terdokumentasi dan konfigurasi runtime produksi telah diverifikasi tanpa menampilkan atau mencatat rahasia.
+
 
 ## 4.2 Urutan Pelaksanaan
 
