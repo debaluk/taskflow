@@ -355,11 +355,11 @@ Fase 1 dinyatakan selesai jika:
 - **Kriteria penerimaan:** pengguna dapat membuka Detail dari seluruh entry point, melihat konteks Task, kembali ke halaman asal, dan setelah update kembali ke halaman serta parameter yang sama; direct access memiliki fallback; URL eksternal ditolak; regression test mencakup route, akses, dan redirect.
 - **Area audit:** `routes/web.php`, `TaskManagerController`, `public/js/task-manager.js`, layout dan seluruh view yang membuka Task, serta feature tests.
 - **Implementasi awal:** route `tasks.show` kini merender halaman HTML; endpoint JSON dipisahkan menjadi `tasks.data`. Halaman Detail menampilkan deskripsi, status, prioritas, tanggal, pembuat, assignee, Subtask, dan catatan; Owner/creator dapat mengubah detail, assignee tetap hanya dapat mengubah status dan menambah catatan sesuai F1-02.
-- Entry point Task pada Dashboard/List, halaman List, Board, Calendar, Workspace, dan Gantt diarahkan ke halaman Detail.
+- Entry point Task pada Dashboard/List, halaman List, Board, Calendar, Workspace, dan Gantt diarahkan ke halaman Detail. Modal tetap tersedia untuk pembuatan Task serta aksi cepat/pengelolaan Subtask dari halaman Detail.
 - URL asal divalidasi dengan `safeReturnUrl()`; fallback direct access menuju List Task yang sesuai. Posisi scroll disimpan sementara pada sessionStorage dan dipulihkan saat kembali ke URL asal.
 - Periode Gantt sekarang ikut dibawa melalui query `month` dan `year`; navigasi bulan mempertahankan Space/List. Navigasi bulan Calendar juga mempertahankan parameter Space/List.
 - Regression test mencakup route JSON, akses halaman Detail, URL asal aman, redirect setelah update, fallback direct access, dan periode/navigasi Gantt.
-- **Hasil CI:** run `42444559951` berstatus **success**: **69 test passed (301 assertions)**; `node --check public/js/task-manager.js` juga sukses. Commit source terakhir: `5db7b85`.
+- **Hasil CI:** run `42444631882` berstatus **success**: **69 test passed (301 assertions)**; `node --check public/js/task-manager.js` juga sukses. Commit source terakhir: `0ce534f`.
 - Status tetap **Testing** sampai alur navigasi dan posisi scroll diperiksa pada browser; belum ada deployment ke VPS.
 
 
