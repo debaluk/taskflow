@@ -19,7 +19,6 @@ function openTaskDetail(taskId) {
     }
 
     const detailUrl = new URL(appPath(`tasks/${taskId}`), window.location.origin);
-    detailUrl.searchParams.set('return_url', returnUrl);
     window.location.assign(detailUrl.toString());
 }
 
