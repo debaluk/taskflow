@@ -47,14 +47,7 @@
                     draggable="true"
                     data-task-id="{{ $task->id }}"
                     ondragstart="dragTask(event)"
-                    onclick="if (!window.isDraggingTask) openTaskModal(@js([
-                        'id' => $task->id,
-                        'title' => $task->title,
-                        'description' => $task->description,
-                        'status' => $task->status,
-                        'priority' => $task->priority,
-                        'due_date' => $task->due_date?->format('Y-m-d'),
-                    ]))"
+                    onclick="if (!window.isDraggingTask) openTaskDetail({{ $task->id }})"
                 >
 
                     <h3>
